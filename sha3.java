@@ -20,7 +20,7 @@ public class sha3 {
 	        + "0x8000000000008080,0x0000000080000001,0x8000000080008008";
 	
 	/** Becomes the working array of constants.*/
-	private static Long values[] = new Long[KECCAKF_ROUNDS];
+	private static Long values[] = new Long[KECCAKF_ROUNDS]; //this should be long not Long
 	
 	/**Hash output */
 	private static long output[];
@@ -31,6 +31,7 @@ public class sha3 {
 	private static int point = 0;
 	
 	//Returns message digest String
+	//Data Types are up for discussion
 	public static String sha3Start(int[] message, int messageLength, int outputLength) {
 		System.out.println("start");
 		output = new long[outputLength]; //good.
@@ -50,10 +51,9 @@ public class sha3 {
 			System.out.println(message[i]);
 		}*/
 		
-		
 		for(int i = 0; i < messageLength; i++) {
 			//fill st with message
-			st[i] = message[i];
+			st[i] = (long) message[i];
 		}
 		
 		//is identical to message as longs
@@ -62,25 +62,14 @@ public class sha3 {
 			//fill st with message
 			System.out.println(st[i]);
 		}*/
-
-		long[] b = keccak(st);
-		//translate BigInt[] to c[] to return
-		//output = new char[b.length];
-		
-		for(int i = 0; i < b.length; i++) {
-			output[i] = (char) b[i];
-			//System.out.println(b[i]);
-			//System.out.println(output[i]);
-		}
-		// ^
 		
 		//Should the the completed hash - as String for final
 		String s = "";
-		for(int i = 0; i < output.length; i++) {
+		/*for(int i = 0; i < output.length; i++) {
 			System.out.printf("output[i]: %x\n", output[i]);
 			System.out.println("output[i]: " + (char) output[i]);
 			//s.concat(output[i]);
-		}
+		}*/
 		return s;
 		//return output;
 	}
@@ -133,10 +122,8 @@ public class sha3 {
 	}
 	
 	private static long[] keccak(long st[]) {
-		//BigInteger t = new BigInteger("0");
 		long t = 0;
 		int j = 0, i = 0;
-		//BigInteger bc[] = new BigInteger[5];
 		long bc[] = new long[5];
 		
 		System.out.println("byte:");

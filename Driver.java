@@ -1,6 +1,12 @@
+/*
+ *  This is still kind of a mess as I have been scrambling.
+ * 
+ * 
+ */
 public class Driver {
 	
 	//Convert hex value as character to integer digit
+	//Straight from .c
 	private static int convertHexDigit(char c) {
 		int digit = -1;
 		
@@ -9,7 +15,7 @@ public class Driver {
 		}
 		
 		if(c >= 'A' && c <= 'F') {
-			digit = c - 'A' + 10; //why +10?
+			digit = c - 'A' + 10;
 		}
 		
 		if(c >= 'a' && c <= 'f') {
@@ -20,6 +26,7 @@ public class Driver {
 	}
 	
 	//convert char[] to decimal int[] - creates 8 bit words
+	//Straight from .c
 	private static int testAndReadHex(int[] out, char c[], int max) {
 		int h = 0, l = 0;
 		int i;
@@ -81,12 +88,15 @@ public class Driver {
 		int fails = 0;
 		int msg_len = 0, sha_len = 0;
 		
+		//Expected output
 		int[] sha = new int[64];
-		int[] buf = new int[64];		
+		
+		//Actual output
+		int[] buf = new int[64];	
 		
 		int i;
 		
-		 
+		//i = 1 because we only have one test case
 		for(i = 0; i < 1; i++) {
 			int[] msg;
 			msg = new int[testMsg[i][0].toCharArray().length];
