@@ -1,3 +1,13 @@
+/*
+ * 
+ */
+
+/**
+ * 
+ * @author jamesht@uw.edu, kaiona91@gmail.com
+ *
+ */
+
 public class sha3 {
 	/** Defined number of transform rounds. */
 	private static final int KECCAKF_ROUNDS = 24;
