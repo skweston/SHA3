@@ -43,7 +43,7 @@ public class sha3 {
 
 	    return 1;
 	}
-	//this is for push
+	//this is for pushing
 	private void sha3_final(byte[] md, sha3_ctx_t c)
 	{
 	    int i;
