@@ -1,4 +1,4 @@
-//Hello World! Again
+//Hello World! Again... One more time.
 
 public class sha3 {
 	/** Defined number of transform rounds. */
