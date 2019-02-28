@@ -74,6 +74,11 @@ public class sha3 {
 		//return output;
 	}
 	
+	public sha3() {
+		super();
+	}
+	
+	
 	private static void sha3init(int l) {
 		System.out.println("init");
 		len = l;
@@ -92,7 +97,7 @@ public class sha3 {
 	        c.st_b[j++] ^= data[i];
 	        if (j >= c.rsiz) {
 	        	//TODO we need to figure out what this is doing and make the proper updates
-	            sha3_keccakf(c.st_q);
+	            keccak(c.st_q);
 	            j = 0;
 	        }
 	    }
@@ -101,18 +106,18 @@ public class sha3 {
 	    return 1;
 	}
 	
-	private void sha3_final(byte[] md, sha3_ctx_t[] c)
+	private void sha3_final(byte[] md, sha3_ctx_t c)
 	{
 	    int i;
 
 	    
 	    //TODO Need to ask Paulo what this does. 
-	    c->st.b[c->pt] ^= 0x06;
-	    c->st.b[c->rsiz - 1] ^= 0x80;
+	    c->st.b[c.pt] ^= 0x06;
+	    c->st.b[c.rsiz - 1] ^= 0x80;
 	    
 	    //TODO Need to make sure the st_q is updated before we perform this. Means we'll have to make two
 	    //update functions in the sha3_ctx_t that update the long[] based on the byte[] and vice versa.
-	    sha3_keccakf(c.st_q);
+	    keccak(c.st_q);
 
 	    for (i = 0; i < c->mdlen; i++) {
 	        md[i] = c->st.b[i];
@@ -159,8 +164,8 @@ public class sha3 {
 	
 	public byte[] sha3(String in, int inlen, byte[] md, int mdlen)
 	{
-	    sha3_ctx_t sha3;
-	    
+	    sha3_ctx_t sha3 = new sha3_ctx_t();
+	    sha3.mdlen = mdlen;
 	    //TODO Shannon we need to turn the in string into a byte array that will get copied 
 	    //to into the sha3.st_b byte array.
 	    // After that we can 
@@ -171,6 +176,20 @@ public class sha3 {
 	    return md;
 	}
 
+	
+	private byte[] string_to_byte_array(String input) {
+		
+		byte[] output = new byte[input.length()];
+		
+		for (int i=0; i < input.length(); i++) {
+			output[i] = (byte) input.charAt(i);
+		}
+		
+		
+		return output;
+	}
+	
+	
 	private static long ROTL(long x, int y) {
 		return ((x << y) | (x >> (64 - y)));
 	}
