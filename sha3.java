@@ -8,83 +8,20 @@ public class sha3 {
 	/**NIST defined constants. */
 	private static int[] piln = {10, 7,  11, 17, 18, 3, 5,  16, 8,  21, 24, 4, 15, 23, 19, 13, 12, 2, 20, 14, 22, 9,  6,  1};
 	
-	/**NIST defined constants. Get processed into values[] as Long */
-	private static String constants = 
-	        "0x0000000000000001,0x0000000000008082,0x800000000000808a,"
-	        + "0x8000000080008000,0x000000000000808b,0x0000000080000001,"
-	        + "0x8000000080008081,0x8000000000008009,0x000000000000008a,"
-	        + "0x0000000000000088,0x0000000080008009,0x000000008000000a,"
-	        + "0x000000008000808b,0x800000000000008b,0x8000000000008089,"
-	        + "0x8000000000008003,0x8000000000008002,0x8000000000000080,"
-	        + "0x000000000000800a,0x800000008000000a,0x8000000080008081,"
-	        + "0x8000000000008080,0x0000000080000001,0x8000000080008008";
-	
 	/** Becomes the working array of constants.*/
-	private static Long values[] = new Long[KECCAKF_ROUNDS]; //this should be long not Long
+	private static Long keccak_consts[] = {0x0000000000000001L, 
+            0x0000000000008082L, 0x800000000000808aL, 0x8000000080008000L,
+            0x000000000000808bL, 0x0000000080000001L, 0x8000000080008081L, 
+            0x8000000000008009L, 0x000000000000008aL, 0x0000000000000088L,
+            0x0000000080008009L, 0x000000008000000aL, 0x000000008000808bL,
+            0x800000000000008bL, 0x8000000000008089L, 0x8000000000008003L, 
+            0x8000000000008002L, 0x8000000000000080L, 0x000000000000800aL,
+            0x800000008000000aL, 0x8000000080008081L, 0x8000000000008080L, 
+            0x0000000080000001L, 0x8000000080008008L};
 	
-	/**Hash output */
-	private static long output[];
-	
-	/**Expected output length. ? */
-	private static int len = 0;
-	private static int rsiz = 0;
-	private static int point = 0;
-	
-	//Returns message digest String
-	//Data Types are up for discussion
-	public static String sha3Start(int[] message, int messageLength, int outputLength) {
-		System.out.println("start");
-		output = new long[outputLength]; //good.
-		processConstants(); //good.
-		
-		sha3init(messageLength);
-		sha3Rounds();
-		sha3Complete();
-		
-		//st is the input string as 8bit chunks (two 4 bit hex values per index)
-		long st[] = new long[messageLength];
-		
-		//is correct for 8 bit bytes
-		/*System.out.println("message at input");
-		for(int i = 0; i < messageLength; i++) {
-			//fill st with message
-			System.out.println(message[i]);
-		}*/
-		
-		for(int i = 0; i < messageLength; i++) {
-			//fill st with message
-			st[i] = (long) message[i];
-		}
-		
-		//is identical to message as longs
-		/*System.out.println("st after input");
-		for(int i = 0; i < messageLength; i++) {
-			//fill st with message
-			System.out.println(st[i]);
-		}*/
-		
-		//Should the the completed hash - as String for final
-		String s = "";
-		/*for(int i = 0; i < output.length; i++) {
-			System.out.printf("output[i]: %x\n", output[i]);
-			System.out.println("output[i]: " + (char) output[i]);
-			//s.concat(output[i]);
-		}*/
-		return s;
-		//return output;
-	}
 	
 	public sha3() {
 		super();
-	}
-	
-	
-	private static void sha3init(int l) {
-		System.out.println("init");
-		len = l;
-		
-		//To convert between 64 and 8 bit words, may not need this.
-		rsiz = 200 - 2 * len;
 	}
 	
 	private int sha3_update(sha3_ctx_t c, byte[] data, int len)
@@ -96,8 +33,9 @@ public class sha3 {
 	    for (i = 0; i < len; i++) {
 	        c.st_b[j++] ^= data[i];
 	        if (j >= c.rsiz) {
-	        	//TODO we need to figure out what this is doing and make the proper updates
-	            keccak(c.st_q);
+	        	c.update_q();
+	        	keccak(c.st_q);
+	        	c.update_b();
 	            j = 0;
 	        }
 	    }
@@ -110,65 +48,24 @@ public class sha3 {
 	{
 	    int i;
 
+	    c.st_b[c.pt] ^= 0x06;
+	    c.st_b[c.rsiz - 1] ^= 0x80;
 	    
-	    //TODO Need to ask Paulo what this does. 
-	    c->st.b[c.pt] ^= 0x06;
-	    c->st.b[c.rsiz - 1] ^= 0x80;
-	    
-	    //TODO Need to make sure the st_q is updated before we perform this. Means we'll have to make two
-	    //update functions in the sha3_ctx_t that update the long[] based on the byte[] and vice versa.
+	    c.update_q();
 	    keccak(c.st_q);
+	    c.update_b();
 
-	    for (i = 0; i < c->mdlen; i++) {
-	        md[i] = c->st.b[i];
+	    for (i = 0; i < c.mdlen; i++) {
+	        md[i] = c.st_b[i];
 	    }
-
-	    return 1;
 	}
 
-	
-	private static void sha3Rounds() {
-		//System.out.println("rounds");
 		
-	}
-	
-	private static void sha3Complete() {
-		System.out.println("complete");
-		
-		//output[point] ^= 0x06; //6 at end of content (may have 000 until end)
-		//output[rsiz - 1] ^= 0x80; //128 at last value
-		
-		//output = keccakf(output);
-	}
-	
-	//Turns Strings into values we can use
-	private static void processConstants() {
-		System.out.println("constants");
-		String[] hex = constants.split(",");
-		//remove "0x" from constants
-		for(int i = 0; i < hex.length; i++) {
-			hex[i] = hex[i].substring(2, hex[i].length());
-		}
-		
-		//positively sign the constants
-		String plus = "+";
-		for(int i = 0; i < hex.length; i++) {
-			hex[i] = plus.concat(hex[i]);
-		}
-
-		//convert hex string to long
-		for(int i = 0; i < hex.length; i++) {
-			values[i] = Long.parseUnsignedLong(hex[i], 16);
-		}
-	}
-	
 	public byte[] sha3(String in, int inlen, byte[] md, int mdlen)
 	{
 	    sha3_ctx_t sha3 = new sha3_ctx_t();
 	    sha3.mdlen = mdlen;
-	    //TODO Shannon we need to turn the in string into a byte array that will get copied 
-	    //to into the sha3.st_b byte array.
-	    // After that we can 
+	    sha3.rsiz = 200 - (2*mdlen);
 	    byte[] in_as_bytes = string_to_byte_array(in);
 	    sha3_update(sha3, in_as_bytes, in_as_bytes.length);
 	    sha3_final(md, sha3);
@@ -191,7 +88,7 @@ public class sha3 {
 	
 	
 	private static long ROTL(long x, int y) {
-		return ((x << y) | (x >> (64 - y)));
+		return ((x << y) | (x >>> (64 - y)));
 	}
 	
 	private static long[] keccak(long st[]) {
@@ -211,31 +108,23 @@ public class sha3 {
 			
 			//Theta
 			for(i = 0; i < 5; i++) {
-				/*System.out.println("theta");
-				System.out.println(Long.toBinaryString(st[i]));
-				System.out.println(Long.toBinaryString(st[i + 5]));
-				System.out.println(Long.toBinaryString(st[i + 10]));
-				System.out.println(Long.toBinaryString(st[i + 15]));
-				System.out.println(Long.toBinaryString(st[i + 20]));*/
 				bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
-				//System.out.println(Long.toBinaryString(bc[i]));
 			}
 			
 			for(i = 0; i < 5; i++) {
 				t = bc[(i + 4) % 5] ^ ROTL(bc[(i + 1) % 5], 1);
 				for(j = 0; j < 25; j++) {
 					st[j + i] ^= t;
-					st[j + i] = st[j + i] ^ (t);
 				}
 			}
 			
 			//Rho Pi
 			t = st[1];
-			for(i = 0; i <  24; i++) {
-				/*j = piln[i];
+			for(i = 0; i <  KECCAKF_ROUNDS; i++) {
+				j = piln[i];
 				bc[0] = st[j];
 				st[j] = ROTL(t, rotc[i]);
-				st[j] = ROTL(t, rotc[i]);*/
+				st[j] = ROTL(t, rotc[i]);
 			}
 			
 			//Chi
@@ -251,7 +140,7 @@ public class sha3 {
 			}
 			
 			//Iota
-			st[0] ^= values[r];
+			st[0] ^= keccak_consts[r];
 		}
 		
 		return st;
@@ -262,14 +151,36 @@ public class sha3 {
         private byte[] st_b = new byte[200];
         private long[] st_q = new long[25];
         
-        private int pt = 0, rsiz = 0, mdlen = 0;
+        private int pt = 0, rsiz = 136, mdlen = 0;
         
         private sha3_ctx_t() {
         	
         	super();
         }
         
+        private void update_q( ) {
+        	int j = 0;
+        	for (int i=0; i < this.st_b.length; i++) {
+        		
+        		long temp = 0;
+        		temp += st_b[i];
+        		temp = temp << 8;
+        		st_q[j] = temp;
+        		if ((i+1) % 8 == 0) {
+        			temp = 0;
+        			j++;
+        		}
+        	}
+        }
         
-        
+        private void update_b() {
+        	int i, j;
+        	
+        	for(i=0; i < st_q.length; i++) {
+        		for (j=0; j<8; j++) {
+        			st_b[j + (8*i)] = ((byte) (st_q[i] >>> (64 - ((1+j)*8)))); 
+        		}
+        	}
+        }
     }
 }
