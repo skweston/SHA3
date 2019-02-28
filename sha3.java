@@ -1,5 +1,3 @@
-//Hello World! Again... One more time.
-
 public class sha3 {
 	/** Defined number of transform rounds. */
 	private static final int KECCAKF_ROUNDS = 24;
@@ -84,6 +82,46 @@ public class sha3 {
 		rsiz = 200 - 2 * len;
 	}
 	
+	private int sha3_update(sha3_ctx_t c, byte[] data, int len)
+	{
+	    int i;
+	    int j;
+
+	    j = c.pt;
+	    for (i = 0; i < len; i++) {
+	        c.st_b[j++] ^= data[i];
+	        if (j >= c.rsiz) {
+	        	//TODO we need to figure out what this is doing and make the proper updates
+	            sha3_keccakf(c.st_q);
+	            j = 0;
+	        }
+	    }
+	    c.pt = j;
+
+	    return 1;
+	}
+	
+	private void sha3_final(byte[] md, sha3_ctx_t[] c)
+	{
+	    int i;
+
+	    
+	    //TODO Need to ask Paulo what this does. 
+	    c->st.b[c->pt] ^= 0x06;
+	    c->st.b[c->rsiz - 1] ^= 0x80;
+	    
+	    //TODO Need to make sure the st_q is updated before we perform this. Means we'll have to make two
+	    //update functions in the sha3_ctx_t that update the long[] based on the byte[] and vice versa.
+	    sha3_keccakf(c.st_q);
+
+	    for (i = 0; i < c->mdlen; i++) {
+	        md[i] = c->st.b[i];
+	    }
+
+	    return 1;
+	}
+
+	
 	private static void sha3Rounds() {
 		//System.out.println("rounds");
 		
@@ -117,6 +155,20 @@ public class sha3 {
 		for(int i = 0; i < hex.length; i++) {
 			values[i] = Long.parseUnsignedLong(hex[i], 16);
 		}
+	}
+	
+	public byte[] sha3(String in, int inlen, byte[] md, int mdlen)
+	{
+	    sha3_ctx_t sha3;
+	    
+	    //TODO Shannon we need to turn the in string into a byte array that will get copied 
+	    //to into the sha3.st_b byte array.
+	    // After that we can 
+	    byte[] in_as_bytes = string_to_byte_array(in);
+	    sha3_update(sha3, in_as_bytes, in_as_bytes.length);
+	    sha3_final(md, sha3);
+
+	    return md;
 	}
 
 	private static long ROTL(long x, int y) {
@@ -185,4 +237,20 @@ public class sha3 {
 		
 		return st;
 	}
+	
+    private class sha3_ctx_t {
+        
+        private byte[] st_b = new byte[200];
+        private long[] st_q = new long[25];
+        
+        private int pt = 0, rsiz = 0, mdlen = 0;
+        
+        private sha3_ctx_t() {
+        	
+        	super();
+        }
+        
+        
+        
+    }
 }
