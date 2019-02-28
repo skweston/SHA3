@@ -34,7 +34,7 @@ public class sha3 {
 		super();
 	}
 	
-	private int sha3_update(sha3_ctx_t c, byte[] data, int len)
+	private static int sha3_update(sha3_ctx_t c, byte[] data, int len)
 	{
 	    int i;
 	    int j;
@@ -53,8 +53,8 @@ public class sha3 {
 
 	    return 1;
 	}
-	//this is for pushing
-	private void sha3_final(byte[] md, sha3_ctx_t c)
+	
+	private static void sha3_final(byte[] md, sha3_ctx_t c)
 	{
 	    int i;
 
@@ -65,13 +65,15 @@ public class sha3 {
 	    keccak(c.st_q);
 	    c.update_b();
 
-	    for (i = 0; i < c.mdlen; i++) {
-	        md[i] = c.st_b[i];
+	    System.out.println("mdlen: " + md.length);
+	    for (i = 0; i < md.length; i++) {
+	    	//System.out.println("i: " + i);
+	    	System.out.printf("byte %d: %d\n", i, (int) c.st_b[i]);
+	        md[i] = c.st_b[i]; 
 	    }
 	}
-
 		
-	public byte[] sha3(String in, int inlen, byte[] md, int mdlen)
+	public static byte[] sha3(String in, int inlen, byte[] md, int mdlen)
 	{
 	    sha3_ctx_t sha3 = new sha3_ctx_t();
 	    sha3.mdlen = mdlen;
@@ -84,14 +86,13 @@ public class sha3 {
 	}
 
 	
-	private byte[] string_to_byte_array(String input) {
+	private static byte[] string_to_byte_array(String input) {
 		
 		byte[] output = new byte[input.length()];
 		
 		for (int i=0; i < input.length(); i++) {
 			output[i] = (byte) input.charAt(i);
 		}
-		
 		
 		return output;
 	}
@@ -106,11 +107,16 @@ public class sha3 {
 		int j = 0, i = 0;
 		long bc[] = new long[5];
 		
-		System.out.println("byte:");
-		byte v = 0;
+		byte[] v = new byte[8];
 		for(i = 0; i < 25; i++) {
-			System.out.println(Long.toBinaryString(st[i]));
-			v = 0;
+			for (j=0; j < v.length; j++) {
+				v[j] = (byte) (st[i] >>> 64 - (8*(j+1))); 
+			}
+			st[i] = ((long) v[0])     | (((long) v[1]) << 8) |
+		            (((long) v[2]) << 16) | (((long) v[3]) << 24) |
+		            (((long) v[4]) << 32) | (((long) v[5]) << 40) |
+		            (((long) v[6]) << 48) | (((long) v[7]) << 56);
+	
 		}
 		
 		//Actual iteration
@@ -123,7 +129,8 @@ public class sha3 {
 			
 			for(i = 0; i < 5; i++) {
 				t = bc[(i + 4) % 5] ^ ROTL(bc[(i + 1) % 5], 1);
-				for(j = 0; j < 25; j++) {
+				for(j = 0; j < 25; j += 5) {
+					//System.out.println("j: " + j + " i: " + i);
 					st[j + i] ^= t;
 				}
 			}
@@ -138,9 +145,10 @@ public class sha3 {
 			}
 			
 			//Chi
-			for(j = 0; j < 25; j++) {
+			for(j = 0; j < 25; j += 5) {
 				
 				for(i = 0; i <  5; i++) {
+					System.out.println("j: " + j + " i: " + i);
 					bc[i] = st[j + i];
 				}
 				
@@ -153,10 +161,24 @@ public class sha3 {
 			st[0] ^= keccak_consts[r];
 		}
 		
+		for(i = 0; i < 25; i++) {
+			long temp = st[i];
+			for(j = 0; j < v.length; j++) {
+				v[j] = (byte) (temp >>> (8 * j) & 0xFF);
+			}
+			
+			for(j = 0; j < v.length; j++) {
+        		temp = 0;
+        		temp += v[j];
+        		temp = temp << 8;
+        		st[i] = temp;
+			}
+		}
+		
 		return st;
 	}
 	
-    private class sha3_ctx_t {
+    private static class sha3_ctx_t {
         
         private byte[] st_b = new byte[200];
         private long[] st_q = new long[25];

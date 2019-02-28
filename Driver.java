@@ -86,14 +86,14 @@ public class Driver {
 			
 			System.out.println("sha3");
 			new sha3();
-			//Collects the message digest
-			String md = sha3.sha3Start(msg, msg_len, sha_len); //Should this be a string or byte array?
-			//c should already be sha as a string
+			//(String in, int inlen, byte[] md, int mdlen)
+			byte[] b = new byte[32];
+			sha3.sha3(testMsg[i][0], testMsg[i].length, b, sha.length());
 			
-			//
-			for(int z = 0; z < md.length(); z++) {
-				System.out.println(md);
-			}
+			//byte[] b should = sha
+			String test = new String(b);
+			System.out.println("test: " + test);
+			
 			
 			//if not 0, then broken
 			//fails = verifyOutput(sha, buf, sha_len, i);
