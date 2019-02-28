@@ -1,0 +1,39 @@
+Main.c
+	test_sha3()
+		sha3(msg, msg_len, buf, sha_len)
+			//We don't need buf. We shouldn't need msg_len, we probably need sha_len
+	
+sha3.c
+	sha3()
+		create context
+		sha3_init()
+		sha3_update()
+		sha3_final()
+		returns md //message digest, final hash
+	
+	sha3_init(context, mdlen) //mdlen = sha_len
+		zeros c->st.q //is the [25]
+		c->mdlen = mdlen
+		c->rsiz = 200 - 2 * mdlen //should always be 136 for [256]
+		c->pt = 0; 
+		returns 1 //never checked or used
+	
+	//internal data array is filled at the byte level but processed at the long level
+	sha3_update(context, data, len)
+		j = c->pt //which was set to 0 in init()
+		for length of msg
+			c->st.b[j++] ^= data[i] //data is msg, st.b is [200]
+			if(j > rsiz) //is this a block? is rsiz the block size? -> fips 202/table 3 confirms yes
+				sha3_keccakf(st.q) //st.q = [25]
+				j = 0
+		
+		c->pt = j //saved for padding(?) in sha3_final, value must be knowable
+	
+	sha3_final(md, context) //md is buf, the void pointer to the output 
+		st.b[pt] ^= 0x06 //where does this constant come from? padding?
+		st.b[rsiz - 1] ^= 0x80 //this modifies the end of the first block...?
+		sha3_keccakf(c->st.q) //passes [25] back to keccak()
+		for length of md
+			copy st.b into md //[200]
+			
+		

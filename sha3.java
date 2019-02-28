@@ -20,6 +20,7 @@ public class sha3 {
 	        + "0x8000000000008080,0x0000000080000001,0x8000000080008008";
 	
 	/** Becomes the working array of constants.*/
+	//Do we want these to be bytes?
 	private static Long values[] = new Long[KECCAKF_ROUNDS]; //this should be long not Long
 	
 	/**Hash output */
@@ -75,6 +76,7 @@ public class sha3 {
 	}
 	
 	public sha3() {
+		//can we initialize rsiz here?
 		super();
 	}
 	
@@ -176,7 +178,7 @@ public class sha3 {
 	    return md;
 	}
 
-	
+	//Does this replace processConstants?
 	private byte[] string_to_byte_array(String input) {
 		
 		byte[] output = new byte[input.length()];
