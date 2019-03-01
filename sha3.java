@@ -65,10 +65,11 @@ public class sha3 {
 	    keccak(c.st_q);
 	    c.update_b();
 
-	    System.out.println("mdlen: " + md.length);
+	    //System.out.println("mdlen: " + md.length);
 	    for (i = 0; i < md.length; i++) {
 	    	//System.out.println("i: " + i);
-	    	System.out.printf("byte %d: %d\n", i, (int) c.st_b[i]);
+	    	//Below prints the same as the byte print in the Driver
+	    	//System.out.printf("byte %d: %d\n", i, (byte) c.st_b[i]);
 	        md[i] = c.st_b[i]; 
 	    }
 	}
@@ -97,7 +98,6 @@ public class sha3 {
 		return output;
 	}
 	
-	
 	private static long ROTL(long x, int y) {
 		return ((x << y) | (x >>> (64 - y)));
 	}
@@ -108,16 +108,19 @@ public class sha3 {
 		long bc[] = new long[5];
 		
 		byte[] v = new byte[8];
+		
 		for(i = 0; i < 25; i++) {
+			//System.out.println("pre endian: " + st[i]);
 			for (j=0; j < v.length; j++) {
-				v[j] = (byte) (st[i] >>> 64 - (8*(j+1))); 
+				v[j] = (byte) (st[i] >>> 64 - (8 * (j + 1))); 
 			}
-			st[i] = ((long) v[0])     | (((long) v[1]) << 8) |
+			
+			st[i] = ((long) v[0]) | (((long) v[1]) << 8) |
 		            (((long) v[2]) << 16) | (((long) v[3]) << 24) |
 		            (((long) v[4]) << 32) | (((long) v[5]) << 40) |
 		            (((long) v[6]) << 48) | (((long) v[7]) << 56);
-	
-		}
+			//System.out.println("post endian: " + st[i]);
+		}	
 		
 		//Actual iteration
 		for(int r = 0; r < KECCAKF_ROUNDS; r++) {
@@ -130,7 +133,6 @@ public class sha3 {
 			for(i = 0; i < 5; i++) {
 				t = bc[(i + 4) % 5] ^ ROTL(bc[(i + 1) % 5], 1);
 				for(j = 0; j < 25; j += 5) {
-					//System.out.println("j: " + j + " i: " + i);
 					st[j + i] ^= t;
 				}
 			}
@@ -148,7 +150,6 @@ public class sha3 {
 			for(j = 0; j < 25; j += 5) {
 				
 				for(i = 0; i <  5; i++) {
-					System.out.println("j: " + j + " i: " + i);
 					bc[i] = st[j + i];
 				}
 				
@@ -163,6 +164,7 @@ public class sha3 {
 		
 		for(i = 0; i < 25; i++) {
 			long temp = st[i];
+			//System.out.println("pre endian: " + st[i]);
 			for(j = 0; j < v.length; j++) {
 				v[j] = (byte) (temp >>> (8 * j) & 0xFF);
 			}
@@ -173,6 +175,7 @@ public class sha3 {
         		temp = temp << 8;
         		st[i] = temp;
 			}
+			//System.out.println("post endian: " + st[i]);
 		}
 		
 		return st;

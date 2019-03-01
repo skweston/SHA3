@@ -32,7 +32,7 @@ public class Driver {
 		int i;
 		
 		for(i = 0; i < (max/2); i++) {
-			System.out.println("i: " + i);
+			//System.out.println("i: " + i);
 			h = convertHexDigit(c[2 * i]);
 			if(h < 0) {
 				return i;
@@ -43,7 +43,7 @@ public class Driver {
 			}
 			out[i] = (h << 4) + l;
 		}
-		
+		g
 		return i;
 	}
 
@@ -78,17 +78,22 @@ public class Driver {
 			String sha = testMsg[i][1];
 			sha_len = sha.length();
 			
-			System.out.println("message");
+			/*System.out.println("message");
 			for(int z = 0; z < msg_len; z++) {
 				System.out.printf("%x ", msg[z]);
 			}
-			System.out.println();
+			System.out.println();*/
 			
 			System.out.println("sha3");
 			new sha3();
 			//(String in, int inlen, byte[] md, int mdlen)
 			byte[] b = new byte[32];
 			sha3.sha3(testMsg[i][0], testMsg[i].length, b, sha.length());
+			
+			for(int z = 0; z < b.length; z++) {
+				System.out.printf("%d ", b[z]);
+			}
+			System.out.println();
 			
 			//byte[] b should = sha
 			String test = new String(b);
