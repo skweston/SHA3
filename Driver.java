@@ -43,7 +43,7 @@ public class Driver {
 			}
 			out[i] = (h << 4) + l;
 		}
-		g
+		
 		return i;
 	}
 
@@ -56,7 +56,8 @@ public class Driver {
 		//Test strings pulled from C implementation
 		String[][] testMsg = {
 		        {   
-		            "9F2FCC7C90DE090D6B87CD7E9718C1EA6CB21118FC2D5DE9F97E5DB6AC1E9C10",
+		            /*"9F2FCC7C90DE090D6B87CD7E9718C1EA6CB21118FC2D5DE9F97E5DB6AC1E9C10"*/
+		        	"abc",
 		            "2F1A5F7159E34EA19CDDC70EBF9B81F1A66DB40615D7EAD3CC1F1B954D82A3AF"
 		        }
 		};

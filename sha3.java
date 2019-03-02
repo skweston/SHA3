@@ -46,6 +46,12 @@ public class sha3 {
 	        	c.update_q();
 	        	keccak(c.st_q);
 	        	c.update_b();
+//	        	String debug = new String(c.st_b);
+//	        	System.out.printf("%s\n", debug);
+	        	for (int k=0; k < c.st_b.length; k++) {
+	    	    	System.out.printf("%d ", (int)c.st_b[k]);
+	    	    }
+	    	    System.out.println();
 	            j = 0;
 	        }
 	    }
@@ -58,12 +64,19 @@ public class sha3 {
 	{
 	    int i;
 
-	    c.st_b[c.pt] ^= 0x06;
-	    c.st_b[c.rsiz - 1] ^= 0x80;
+	    c.st_b[c.pt] ^= 0x06L;
+	    c.st_b[c.rsiz - 1] ^= 0x80L;
 	    
 	    c.update_q();
 	    keccak(c.st_q);
 	    c.update_b();
+//	    String debug = new String(c.st_b);
+//	    System.out.printf("%s\n", debug);
+	    
+	    for (int k=0; k < c.st_b.length; k++) {
+	    	System.out.printf("%d ", (int)c.st_b[k]);
+	    }
+	    System.out.println();
 
 	    //System.out.println("mdlen: " + md.length);
 	    for (i = 0; i < md.length; i++) {
@@ -102,28 +115,42 @@ public class sha3 {
 		return ((x << y) | (x >>> (64 - y)));
 	}
 	
+	private void endian_conversion(long[] in) {
+		
+	}
+	
 	private static long[] keccak(long st[]) {
 		long t = 0;
 		int j = 0, i = 0;
 		long bc[] = new long[5];
 		
 		byte[] v = new byte[8];
-		
-		for(i = 0; i < 25; i++) {
-			//System.out.println("pre endian: " + st[i]);
-			for (j=0; j < v.length; j++) {
-				v[j] = (byte) (st[i] >>> 64 - (8 * (j + 1))); 
-			}
-			
-			st[i] = ((long) v[0]) | (((long) v[1]) << 8) |
-		            (((long) v[2]) << 16) | (((long) v[3]) << 24) |
-		            (((long) v[4]) << 32) | (((long) v[5]) << 40) |
-		            (((long) v[6]) << 48) | (((long) v[7]) << 56);
-			//System.out.println("post endian: " + st[i]);
-		}	
-		
+		for (int k=0; k < st.length; k++) {
+	    	System.out.printf("%x ", st[k]);
+	    }
+	    System.out.println();
+	    
+	    System.out.println("Little Endian");
+//		for(i = 0; i < 25; i++) {
+//			//System.out.println("pre endian: " + st[i]);
+//			for (j=0; j < v.length; j++) {
+//				v[j] = (byte) (st[i] >>> 64 - (8 * (j + 1))); 
+//			}
+//			
+//			st[i] = ((long) v[0]) | (((long) v[1]) << 8) |
+//		            (((long) v[2]) << 16) | (((long) v[3]) << 24) |
+//		            (((long) v[4]) << 32) | (((long) v[5]) << 40) |
+//		            (((long) v[6]) << 48) | (((long) v[7]) << 56);
+//			//System.out.println("post endian: " + st[i]);
+//		}	
+		for (int k=0; k < st.length; k++) {
+	    	System.out.printf("%x ", st[k]);
+	    }
+	    System.out.println();
 		//Actual iteration
 		for(int r = 0; r < KECCAKF_ROUNDS; r++) {
+			
+			System.out.println("Theta:");
 			
 			//Theta
 			for(i = 0; i < 5; i++) {
@@ -136,7 +163,13 @@ public class sha3 {
 					st[j + i] ^= t;
 				}
 			}
+			for (int k=0; k < st.length; k++) {
+		    	System.out.printf("%x ", st[k]);
+		    }
+		    System.out.println();
 			
+		    System.out.println("Rho Pi");
+		    
 			//Rho Pi
 			t = st[1];
 			for(i = 0; i <  KECCAKF_ROUNDS; i++) {
@@ -146,6 +179,13 @@ public class sha3 {
 				st[j] = ROTL(t, rotc[i]);
 			}
 			
+			for (int k=0; k < st.length; k++) {
+		    	System.out.printf("%x ", st[k]);
+		    }
+		    System.out.println();
+			
+		    System.out.println("Chi: ");
+		    
 			//Chi
 			for(j = 0; j < 25; j += 5) {
 				
@@ -158,25 +198,47 @@ public class sha3 {
 				}
 			}
 			
+			for (int k=0; k < st.length; k++) {
+		    	System.out.printf("%x ", st[k]);
+		    }
+		    System.out.println();
+			
+		    
+		    System.out.println("Iota: ");
 			//Iota
 			st[0] ^= keccak_consts[r];
+			
+			for (int k=0; k < st.length; k++) {
+		    	System.out.printf("%x ", st[k]);
+		    }
+		    System.out.println();
 		}
 		
-		for(i = 0; i < 25; i++) {
-			long temp = st[i];
-			//System.out.println("pre endian: " + st[i]);
-			for(j = 0; j < v.length; j++) {
-				v[j] = (byte) (temp >>> (8 * j) & 0xFF);
-			}
-			
-			for(j = 0; j < v.length; j++) {
-        		temp = 0;
-        		temp += v[j];
-        		temp = temp << 8;
-        		st[i] = temp;
-			}
-			//System.out.println("post endian: " + st[i]);
-		}
+		System.out.println("End Keccak: ");
+		
+//		for(i = 0; i < 25; i++) {
+//			long temp = st[i];
+//			//System.out.println("pre endian: " + st[i]);
+//			for(j = 0; j < v.length; j++) {
+//				v[j] = (byte) ((temp >>> (8 * j)));
+//			}
+//			
+//			for(j = 0; j < v.length; j++) {
+//        		temp = 0;
+//        		temp += (((long) v[j]) & 0xffL);
+//        		temp = temp << 8;
+//        		st[i] = temp;
+//			}
+//			//System.out.println("post endian: " + st[i]);
+//		
+//		
+//			//System.out.println("post endian: " + st[i]);
+//			
+//			for (int k=0; k < st.length; k++) {
+//		    	System.out.printf("%x ", st[k]);
+//		    }
+//		    System.out.println();
+//		}
 		
 		return st;
 	}
@@ -206,6 +268,7 @@ public class sha3 {
         			j++;
         		}
         	}
+        	
         }
         
         private void update_b() {
