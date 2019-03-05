@@ -57,7 +57,7 @@ public class Driver {
 		String[][] testMsg = {
 		        {   
 		            /*"9F2FCC7C90DE090D6B87CD7E9718C1EA6CB21118FC2D5DE9F97E5DB6AC1E9C10"*/
-		        	"abc",
+		        	"",
 		            "2F1A5F7159E34EA19CDDC70EBF9B81F1A66DB40615D7EAD3CC1F1B954D82A3AF"
 		        }
 		};
@@ -89,17 +89,17 @@ public class Driver {
 			new sha3();
 			//(String in, int inlen, byte[] md, int mdlen)
 			byte[] b = new byte[32];
-			sha3.sha3(testMsg[i][0], testMsg[i].length, b, sha.length());
+			String input = "";
+			sha3.sha3(input, input.length(), b, b.length);
 			
 			for(int z = 0; z < b.length; z++) {
-				System.out.printf("%d ", b[z]);
+				System.out.printf("%x ", b[z]);
 			}
 			System.out.println();
 			
 			//byte[] b should = sha
-			String test = new String(b);
-			System.out.println("test: " + test);
-			
+			System.out.printf("test: ");
+//			for (int p=0; p<b.len)
 			
 			//if not 0, then broken
 			//fails = verifyOutput(sha, buf, sha_len, i);
@@ -129,6 +129,8 @@ public class Driver {
 	public static void main(String[] args) {
 		if(test_sha3() == 0) {
 			System.out.println("Success!");
+			
+			System.out.println("a7ffc6f8bf1ed766 51c14756a061d662 f580ff4de43b49fa 82d80a4b80f8434a");
 		}
 		
 		//Will need an interactive aspect

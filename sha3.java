@@ -36,8 +36,8 @@ public class sha3 {
 	
 	private static int sha3_update(sha3_ctx_t c, byte[] data, int len)
 	{
-	    int i;
-	    int j;
+		System.out.println("SHA3_update:");
+	    int i, j;
 
 	    j = c.pt;
 	    for (i = 0; i < len; i++) {
@@ -62,6 +62,7 @@ public class sha3 {
 	
 	private static void sha3_final(byte[] md, sha3_ctx_t c)
 	{
+		System.out.println("SHA3_final");
 	    int i;
 
 	    c.st_b[c.pt] ^= 0x06L;
@@ -70,20 +71,9 @@ public class sha3 {
 	    c.update_q();
 	    keccak(c.st_q);
 	    c.update_b();
-//	    String debug = new String(c.st_b);
-//	    System.out.printf("%s\n", debug);
-	    
-	    for (int k=0; k < c.st_b.length; k++) {
-	    	System.out.printf("%d ", (int)c.st_b[k]);
-	    }
-	    System.out.println();
 
-	    //System.out.println("mdlen: " + md.length);
 	    for (i = 0; i < md.length; i++) {
-	    	//System.out.println("i: " + i);
-	    	//Below prints the same as the byte print in the Driver
-	    	//System.out.printf("byte %d: %d\n", i, (byte) c.st_b[i]);
-	        md[i] = c.st_b[i]; 
+	    	md[i] = c.st_b[i]; 
 	    }
 	}
 		
@@ -112,43 +102,36 @@ public class sha3 {
 	}
 	
 	private static long ROTL(long x, int y) {
-		return ((x << y) | (x >>> (64 - y)));
+		return (x << y) | (x >>> (64 - y));
 	}
 	
-	private void endian_conversion(long[] in) {
-		
+	private static long endian_conversion(long in) {
+		return ((long) (in & 0xFF00000000000000L) >>> 56) | ((long) (in & 0x00FF000000000000L) >>> 40) |
+				((long) (in & 0x0000FF0000000000L) >>> 24) |((long) (in & 0x000000FF00000000L) >>> 8) |
+				((long) (in & 0x00000000FF000000L) << 8) |((long) (in & 0x0000000000FF0000L) << 24) |
+				((long) (in & 0x000000000000FF00L) << 40) |((long) (in & 0x00000000000000FFL) << 56);
+							 
 	}
 	
 	private static long[] keccak(long st[]) {
-		long t = 0;
-		int j = 0, i = 0;
+		System.out.println("Keccak");
+		long t;
+		int j, i, r;
 		long bc[] = new long[5];
 		
-		byte[] v = new byte[8];
-		for (int k=0; k < st.length; k++) {
-	    	System.out.printf("%x ", st[k]);
-	    }
-	    System.out.println();
+//		for (int k=0; k < st.length; k++) {
+//	    	System.out.printf("%x ", st[k]);
+//	    }
+//	    System.out.println();
 	    
 	    System.out.println("Little Endian");
-//		for(i = 0; i < 25; i++) {
-//			//System.out.println("pre endian: " + st[i]);
-//			for (j=0; j < v.length; j++) {
-//				v[j] = (byte) (st[i] >>> 64 - (8 * (j + 1))); 
-//			}
-//			
-//			st[i] = ((long) v[0]) | (((long) v[1]) << 8) |
-//		            (((long) v[2]) << 16) | (((long) v[3]) << 24) |
-//		            (((long) v[4]) << 32) | (((long) v[5]) << 40) |
-//		            (((long) v[6]) << 48) | (((long) v[7]) << 56);
-//			//System.out.println("post endian: " + st[i]);
-//		}	
-		for (int k=0; k < st.length; k++) {
-	    	System.out.printf("%x ", st[k]);
+	    for (int k=0; k < st.length; k++) {
+	    	endian_conversion(st[k]);
 	    }
 	    System.out.println();
-		//Actual iteration
-		for(int r = 0; r < KECCAKF_ROUNDS; r++) {
+
+	    //Actual iteration
+		for(r = 0; r < KECCAKF_ROUNDS; r++) {
 			
 			System.out.println("Theta:");
 			
@@ -163,10 +146,10 @@ public class sha3 {
 					st[j + i] ^= t;
 				}
 			}
-			for (int k=0; k < st.length; k++) {
-		    	System.out.printf("%x ", st[k]);
-		    }
-		    System.out.println();
+//			for (int k=0; k < st.length; k++) {
+//		    	System.out.printf("%x ", st[k]);
+//		    }
+//		    System.out.println();
 			
 		    System.out.println("Rho Pi");
 		    
@@ -176,13 +159,13 @@ public class sha3 {
 				j = piln[i];
 				bc[0] = st[j];
 				st[j] = ROTL(t, rotc[i]);
-				st[j] = ROTL(t, rotc[i]);
+				t = bc[0];
 			}
 			
-			for (int k=0; k < st.length; k++) {
-		    	System.out.printf("%x ", st[k]);
-		    }
-		    System.out.println();
+//			for (int k=0; k < st.length; k++) {
+//		    	System.out.printf("%x ", st[k]);
+//		    }
+//		    System.out.println();
 			
 		    System.out.println("Chi: ");
 		    
@@ -198,10 +181,10 @@ public class sha3 {
 				}
 			}
 			
-			for (int k=0; k < st.length; k++) {
-		    	System.out.printf("%x ", st[k]);
-		    }
-		    System.out.println();
+//			for (int k=0; k < st.length; k++) {
+//		    	System.out.printf("%x ", st[k]);
+//		    }
+//		    System.out.println();
 			
 		    
 		    System.out.println("Iota: ");
@@ -216,29 +199,14 @@ public class sha3 {
 		
 		System.out.println("End Keccak: ");
 		
-//		for(i = 0; i < 25; i++) {
-//			long temp = st[i];
-//			//System.out.println("pre endian: " + st[i]);
-//			for(j = 0; j < v.length; j++) {
-//				v[j] = (byte) ((temp >>> (8 * j)));
-//			}
-//			
-//			for(j = 0; j < v.length; j++) {
-//        		temp = 0;
-//        		temp += (((long) v[j]) & 0xffL);
-//        		temp = temp << 8;
-//        		st[i] = temp;
-//			}
-//			//System.out.println("post endian: " + st[i]);
-//		
-//		
-//			//System.out.println("post endian: " + st[i]);
-//			
-//			for (int k=0; k < st.length; k++) {
-//		    	System.out.printf("%x ", st[k]);
-//		    }
-//		    System.out.println();
-//		}
+		for (int k=0; k < st.length; k++) {
+	    	endian_conversion(st[k]);
+	    }
+			
+		for (int k=0; k < st.length; k++) {
+			System.out.printf("%x ", st[k]);
+		}
+		System.out.println();
 		
 		return st;
 	}
@@ -248,7 +216,7 @@ public class sha3 {
         private byte[] st_b = new byte[200];
         private long[] st_q = new long[25];
         
-        private int pt = 0, rsiz = 136, mdlen = 0;
+        private int pt = 0, rsiz = 0, mdlen = 0;
         
         private sha3_ctx_t() {
         	
@@ -256,17 +224,16 @@ public class sha3 {
         }
         
         private void update_q( ) {
-        	int j = 0;
-        	for (int i=0; i < this.st_b.length; i++) {
-        		
-        		long temp = 0;
-        		temp += st_b[i];
-        		temp = temp << 8;
-        		st_q[j] = temp;
-        		if ((i+1) % 8 == 0) {
-        			temp = 0;
-        			j++;
-        		}
+        	for(int x=0; x<this.st_b.length; x++) {
+        		System.out.printf("%x ", this.st_b[x]);
+        	}
+        	System.out.println();
+        	
+        	for (int i=0; i < this.st_q.length; i++) {
+        		this.st_q[i] = ((((long)st_b[i*8]) <<56) & 0xFF00000000000000L) | ((((long)st_b[i*8 + 1]) <<48) & 0x00FF000000000000L) |
+        				((((long)st_b[i*8 + 2]) <<40) & 0x0000FF0000000000L) | ((((long)st_b[i*8 + 3]) <<32) & 0x000000FF00000000L) |
+        				((((long)st_b[i*8 + 4]) <<24) & 0x00000000FF000000L) | ((((long)st_b[i*8 + 5]) <<16) & 0x0000000000FF0000L) |
+        				((((long)st_b[i*8 + 6]) <<8) & 0x000000000000FF00L) | ((((long)st_b[i*8 + 7])) & 0x00000000000000FFL);
         	}
         	
         }
