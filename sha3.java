@@ -120,8 +120,8 @@ public class sha3 {
 		return O;
 	}
 	
-	private static byte[] encode_string(int L, byte[] S) {
-		return concat(left_encode(L), S);
+	private static byte[] encode_string(byte[] S) {
+		return concat(left_encode(S.length), S);
 		
 	}
 	/*bytepad(X, w):
@@ -171,12 +171,22 @@ public class sha3 {
 	}
 
 	public static byte[] cSHAKE256(String X, int L, String N, String S) {
-		byte[] result = new byte[1];
+		byte[] result = new byte[32];
 		
 		int check = 256;
 		
+		
+		
 		if (N.length() < check && S.length() < check) {
-			
+			if (N == "" && S == "") {
+				byte[] tempX = concat(X.getBytes(), new byte[(byte)0xF0]);
+				String newX = new String(tempX);
+				result = sha3(newX, newX.length(), new byte[32], 32);
+			} else {
+				byte[] temp = bytepad(concat(encode_string(N.getBytes()), S.getBytes()), 136);
+				byte[] temp2 = concat(temp, X.getBytes());
+				sha3(new String(temp2), temp2.length, result, result.length);
+			}
 		}
 		
 		return result;
@@ -184,7 +194,7 @@ public class sha3 {
 	public static byte[] kmacxof256(byte[] K, String X, int L, String S) {
 		
 		
-		byte[] result = new byte[1];
+		byte[] result = new byte[32];
 		
 		return result;
 	}
