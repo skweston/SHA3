@@ -1,10 +1,12 @@
+import java.math.BigInteger;
+
 /*
  * 
  */
 
 /**
  * 
- * @author jamesht@uw.edu, kaiona91@gmail.com
+ * @author James Haines-Temons, Shannon Weston
  *
  */
 
@@ -46,8 +48,7 @@ public class sha3 {
 	        	c.update_q();
 	        	keccak(c.st_q);
 	        	c.update_b();
-//	        	String debug = new String(c.st_b);
-//	        	System.out.printf("%s\n", debug);
+
 	        	for (int k=0; k < c.st_b.length; k++) {
 	    	    	System.out.printf("%d ", (int)c.st_b[k]);
 	    	    }
@@ -76,6 +77,86 @@ public class sha3 {
 	    	md[i] = c.st_b[i]; 
 	    }
 	}
+	/*right_encode(x):
+		Validity Conditions: 0 ≤ x < 2 2040
+		1. Let n be the smallest positive integer for which 2^8n > x.
+		2. Let x 1 , x 2 ,..., x n be the base-256 encoding of x satisfying:
+		x = ∑ 2 8(n-i) x i , for i = 1 to n.
+		3. Let O i = enc 8 (x i ), for i = 1 to n.
+		4. Let O n+1 = enc 8 (n).
+		5. Return O = O 1 || O 2 || ... || O n || O n+1 .*/
+	private static byte[] right_encode(int x) {
+		int n =0, i;
+		int temp = x;
+		while (1 << 8*n < x) n++;
+		byte[] O = new byte[n+1];
+		for (i=1; i < n; i++) {
+			O[n - 1 - i] = (byte) (temp & 0xFF);
+			temp >>>= 8;
+		}
+		O[i] = (byte) n;
+		
+		return O;
+	}
+	/*left_encode(x):
+		Validity Conditions: 0 ≤ x < 2 2040
+		1. Let n be the smallest positive integer for which 2 8n > x.
+		2. Let x 1 , x 2 , ..., x n be the base-256 encoding of x satisfying:
+		x = ∑ 2 8(n-i) x i , for i = 1 to n.
+		3. Let O i = enc 8 (x i ), for i = 1 to n.
+		4. Let O 0 = enc 8 (n).
+		5. Return O = O 0 || O 1 || ... || O n−1 || O n .*/
+	private static byte[] left_encode(int x) {
+		int n =0, i;
+		int temp = x;
+		while (1 << (8*n) < x) n++;
+		byte[] O = new byte[n+1];
+		O[0] = (byte) n;
+		for (i=1; i < n; i++) {
+			O[n-i] = (byte) (temp & 0xFF);
+			temp >>>= 8;
+		}
+		
+		return O;
+	}
+	
+	private static byte[] encode_string(int L, byte[] S) {
+		return concat(left_encode(L), S);
+		
+	}
+	/*bytepad(X, w):
+		Validity Conditions: w > 0
+		1. z = left_encode(w) || X.
+		2. while len(z) mod 8 ≠ 0:
+			z = z || 0
+		3. while (len(z)/8) mod w ≠ 0:
+			z = z || 00000000
+		4. return z.*/
+	private static byte[] bytepad(byte[] X, int w) {
+		byte[] temp = left_encode(w);
+		byte[] z = concat(temp, X);
+		int l = z.length - 1;
+		byte[] pad = {0};
+		while (z[l] > 0) {
+			z[l] <<= 1;
+		}
+		while ((z.length/8) % w != 0) {
+			concat(z, pad);
+		}
+		return z;
+	}
+	
+	private static byte[] concat(byte[] a, byte[] b) {
+		int i, j;
+		byte[] result = new byte[a.length + b.length];
+		for (i=0; i < a.length; i++) {
+			result[i] = a[i];
+		}
+		for (j = 0; j < b.length; j++) {
+			result[i+j] = b[j];
+		}
+		return result;
+	}
 		
 	public static byte[] sha3(String in, int inlen, byte[] md, int mdlen)
 	{
@@ -89,6 +170,24 @@ public class sha3 {
 	    return md;
 	}
 
+	public static byte[] cSHAKE256(String X, int L, String N, String S) {
+		byte[] result = new byte[1];
+		
+		int check = 256;
+		
+		if (N.length() < check && S.length() < check) {
+			
+		}
+		
+		return result;
+	}
+	public static byte[] kmacxof256(byte[] K, String X, int L, String S) {
+		
+		
+		byte[] result = new byte[1];
+		
+		return result;
+	}
 	
 	private static byte[] string_to_byte_array(String input) {
 		
@@ -126,7 +225,7 @@ public class sha3 {
 	    
 	    System.out.println("Little Endian");
 	    for (int k=0; k < st.length; k++) {
-	    	endian_conversion(st[k]);
+	    	st[k] = endian_conversion(st[k]);
 	    }
 	    System.out.println();
 
@@ -200,7 +299,7 @@ public class sha3 {
 		System.out.println("End Keccak: ");
 		
 		for (int k=0; k < st.length; k++) {
-	    	endian_conversion(st[k]);
+	    	st[k] = endian_conversion(st[k]);
 	    }
 			
 		for (int k=0; k < st.length; k++) {

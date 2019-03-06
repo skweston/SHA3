@@ -89,7 +89,7 @@ public class Driver {
 			new sha3();
 			//(String in, int inlen, byte[] md, int mdlen)
 			byte[] b = new byte[32];
-			String input = "";
+			String input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
 			sha3.sha3(input, input.length(), b, b.length);
 			
 			for(int z = 0; z < b.length; z++) {
@@ -130,7 +130,7 @@ public class Driver {
 		if(test_sha3() == 0) {
 			System.out.println("Success!");
 			
-			System.out.println("a7ffc6f8bf1ed766 51c14756a061d662 f580ff4de43b49fa 82d80a4b80f8434a");
+			System.out.println("41c0dba2a9d62408 49100376a8235e2c 82e1b9998a999e21 db32dd97496d3376");
 		}
 		
 		//Will need an interactive aspect
