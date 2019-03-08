@@ -172,7 +172,7 @@ public class sha3 {
 
 	public static byte[] cSHAKE256(String X, int L, String N, String S) {
 		byte[] result = new byte[32];
-		
+		byte[] cSHAKEpad = {0x04};
 		int check = 256;
 		
 		
@@ -185,7 +185,8 @@ public class sha3 {
 			} else {
 				byte[] temp = bytepad(concat(encode_string(N.getBytes()), S.getBytes()), 136);
 				byte[] temp2 = concat(temp, X.getBytes());
-				sha3(new String(temp2), temp2.length, result, result.length);
+				byte[] temp3 = concat(temp2, cSHAKEpad );
+				sha3(new String(temp2), temp3.length, result, result.length);
 			}
 		}
 		
