@@ -86,7 +86,7 @@ public class sha3 {
 		4. Let O n+1 = enc 8 (n).
 		5. Return O = O 1 || O 2 || ... || O n || O n+1 .*/
 	private static byte[] right_encode(int x) {
-		int n =0, i;
+		int n =1, i;
 		int temp = x;
 		while (1 << 8*n < x) {
 			n++;
@@ -100,6 +100,7 @@ public class sha3 {
 		
 		return O;
 	}
+	
 	/*left_encode(x):
 		Validity Conditions: 0 ≤ x < 2 2040
 		1. Let n be the smallest positive integer for which 2 8n > x.
@@ -110,16 +111,16 @@ public class sha3 {
 		5. Return O = O 0 || O 1 || ... || O n−1 || O n .*/
 	private static byte[] left_encode(int x) {
 		
-		int n =0, i;
+		int n = 1, i;
 		int temp = x;
-		while (1 << (8*n) < x) n++;
+		while (1 << (8*n) <= x) n++;
 		byte[] O = new byte[n+1];
 		O[0] = (byte) n;
 		for (i=1; i < n; i++) {
 			O[n-i] = (byte) (temp & 0xFF);
 			temp >>>= 8;
 		}
-		
+			
 		return O;
 	}
 	
@@ -131,26 +132,25 @@ public class sha3 {
 	/*bytepad(X, w):
 		Validity Conditions: w > 0
 		1. z = left_encode(w) || X.
-		2. while len(z) mod 8 ≠ 0:
+		2. while len(z) mod 8 ≠ 0: (byte driven model, len(z) in bits is always multiple of 8)
 			z = z || 0
 		3. while (len(z)/8) mod w ≠ 0:
 			z = z || 00000000
 		4. return z.*/
 	private static byte[] bytepad(byte[] X, int w) {
-		byte[] temp = left_encode(w);
-		byte[] z = concat(temp, X);
-		int l = z.length - 1;
-		byte[] result = new byte[w]; 
-		while (z[l] > 0) {
-			z[l] <<= 1;
-		}
 		
+		
+		byte[] w_encode = left_encode(w);
+		byte[] z = concat(w_encode, X);
+		byte[] result = new byte[w]; 
+				
 		for (int i = 0; i< z.length; i++) {
 			if (i < result.length) {
 				result[i] = z[i];
+			} else {
+				result[i] = (byte) 0;
 			}
 		}
-		System.out.print("~~~~~~~~~~~~~~~~~~TEST LINE~~~~~~~~~~~~~~~~~");
 		return z;
 	}
 	
@@ -180,8 +180,7 @@ public class sha3 {
 	}
 
 	public static byte[] cSHAKE256(String X, int L, String N, String S) {
-		byte[] result = new byte[32];
-		byte[] cSHAKEpad = {0x04};
+		byte[] result = new byte[64];
 		int check = 256;
 		
 		
@@ -193,11 +192,10 @@ public class sha3 {
 				result = sha3(newX, newX.length(), new byte[64], 64);
 			} else {
 				
-				byte[] temp = bytepad(concat(encode_string(N.getBytes()), S.getBytes()), 136);
+				byte[] temp = bytepad(concat(encode_string(N.getBytes()), encode_string(S.getBytes())), 136);
 				
 				byte[] temp2 = concat(temp, X.getBytes());
-				byte[] temp3 = concat(temp2, cSHAKEpad );
-				result = sha3(new String(temp2), temp3.length, result, result.length);
+				result = sha3(new String(temp2), temp2.length, result, result.length);
 			}
 		} else {
 			System.out.print("Size of input greater than hash limitations");
