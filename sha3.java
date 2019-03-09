@@ -88,13 +88,15 @@ public class sha3 {
 	private static byte[] right_encode(int x) {
 		int n =0, i;
 		int temp = x;
-		while (1 << 8*n < x) n++;
+		while (1 << 8*n < x) {
+			n++;
+		}
 		byte[] O = new byte[n+1];
 		for (i=1; i < n; i++) {
 			O[n - 1 - i] = (byte) (temp & 0xFF);
 			temp >>>= 8;
 		}
-		O[i] = (byte) n;
+		O[O.length-1] = (byte) n;
 		
 		return O;
 	}
@@ -107,6 +109,7 @@ public class sha3 {
 		4. Let O 0 = enc 8 (n).
 		5. Return O = O 0 || O 1 || ... || O n−1 || O n .*/
 	private static byte[] left_encode(int x) {
+		
 		int n =0, i;
 		int temp = x;
 		while (1 << (8*n) < x) n++;
@@ -121,6 +124,7 @@ public class sha3 {
 	}
 	
 	private static byte[] encode_string(byte[] S) {
+		
 		return concat(left_encode(S.length), S);
 		
 	}
@@ -136,17 +140,22 @@ public class sha3 {
 		byte[] temp = left_encode(w);
 		byte[] z = concat(temp, X);
 		int l = z.length - 1;
-		byte[] pad = {0};
+		byte[] result = new byte[w]; 
 		while (z[l] > 0) {
 			z[l] <<= 1;
 		}
-		while ((z.length/8) % w != 0) {
-			concat(z, pad);
+		
+		for (int i = 0; i< z.length; i++) {
+			if (i < result.length) {
+				result[i] = z[i];
+			}
 		}
+		System.out.print("~~~~~~~~~~~~~~~~~~TEST LINE~~~~~~~~~~~~~~~~~");
 		return z;
 	}
 	
 	private static byte[] concat(byte[] a, byte[] b) {
+		
 		int i, j;
 		byte[] result = new byte[a.length + b.length];
 		for (i=0; i < a.length; i++) {
@@ -179,23 +188,37 @@ public class sha3 {
 		
 		if (N.length() < check && S.length() < check) {
 			if (N == "" && S == "") {
-				byte[] tempX = concat(X.getBytes(), new byte[(byte)0xF0]);
+				byte[] tempX = concat(X.getBytes(), new byte[(byte)0xF8]);
 				String newX = new String(tempX);
-				result = sha3(newX, newX.length(), new byte[32], 32);
+				result = sha3(newX, newX.length(), new byte[64], 64);
 			} else {
+				
 				byte[] temp = bytepad(concat(encode_string(N.getBytes()), S.getBytes()), 136);
+				
 				byte[] temp2 = concat(temp, X.getBytes());
 				byte[] temp3 = concat(temp2, cSHAKEpad );
-				sha3(new String(temp2), temp3.length, result, result.length);
+				result = sha3(new String(temp2), temp3.length, result, result.length);
 			}
+		} else {
+			System.out.print("Size of input greater than hash limitations");
 		}
 		
 		return result;
 	}
-	public static byte[] kmacxof256(byte[] K, String X, int L, String S) {
+	public static byte[] kmacxof256(String K, String X, int L, String S) {
 		
 		
-		byte[] result = new byte[32];
+		byte[] result = new byte[64];
+		/*
+		newX = bytepad(encode_string(K), 136) || X || right_encode(0).
+		return cSHAKE256(newX, L, “KMAC”, S).
+		*/
+		byte[] encode_K = encode_string(K.getBytes());
+		byte[] concat1 = concat(encode_K, X.getBytes());
+		byte[] concat2 = concat(concat1, right_encode(0));
+		String newX = new String(concat2);
+		result = cSHAKE256(newX, L, "KMAC", S);
+		
 		
 		return result;
 	}
