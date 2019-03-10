@@ -1,16 +1,17 @@
-import java.math.BigInteger;
-
 /*
  * 
  */
 
 /**
  * 
- * @author James Haines-Temons, Shannon Weston
+ * @author James Haines-Temons, Shannon Weston additional credits to Paulo Baretto and 
  *
  */
 
 public class sha3 {
+	
+	private static boolean cshake256 = false, kmac = false;
+	
 	/** Defined number of transform rounds. */
 	private static final int KECCAKF_ROUNDS = 24;
 	
@@ -36,23 +37,19 @@ public class sha3 {
 		super();
 	}
 	
-	private static int sha3_update(sha3_ctx_t c, byte[] data, int len)
-	{
-		System.out.println("SHA3_update:");
-	    int i, j;
+	private static int sha3_update(sha3_ctx_t c, byte[] data, int len) {
+
+		int i, j;
 
 	    j = c.pt;
 	    for (i = 0; i < len; i++) {
-	        c.st_b[j++] ^= data[i];
+	    	
+	        if (i < data.length) c.st_b[j++] ^= data[i];
+	        else if (cshake256) c.st_b[j++] ^= 0; //need to add this for cshake because bytepad doesn't return full length 136.
 	        if (j >= c.rsiz) {
 	        	c.update_q();
 	        	keccak(c.st_q);
 	        	c.update_b();
-
-	        	for (int k=0; k < c.st_b.length; k++) {
-	    	    	System.out.printf("%d ", (int)c.st_b[k]);
-	    	    }
-	    	    System.out.println();
 	            j = 0;
 	        }
 	    }
@@ -63,7 +60,6 @@ public class sha3 {
 	
 	private static void sha3_final(byte[] md, sha3_ctx_t c)
 	{
-		System.out.println("SHA3_final");
 	    int i;
 
 	    c.st_b[c.pt] ^= 0x06L;
@@ -77,6 +73,8 @@ public class sha3 {
 	    	md[i] = c.st_b[i]; 
 	    }
 	}
+	
+	
 	/*right_encode(x):
 		Validity Conditions: 0 ≤ x < 2 2040
 		1. Let n be the smallest positive integer for which 2^8n > x.
@@ -101,6 +99,7 @@ public class sha3 {
 		return O;
 	}
 	
+	
 	/*left_encode(x):
 		Validity Conditions: 0 ≤ x < 2 2040
 		1. Let n be the smallest positive integer for which 2 8n > x.
@@ -116,23 +115,26 @@ public class sha3 {
 		while (1 << (8*n) <= x) n++;
 		byte[] O = new byte[n+1];
 		O[0] = (byte) n;
-		for (i=1; i < n; i++) {
-			O[n-i] = (byte) (temp & 0xFF);
+		for (i=n; i > 0; i--) {
+			O[i] = (byte) (temp & 0xFF);
 			temp >>>= 8;
 		}
 			
 		return O;
 	}
 	
+	
 	private static byte[] encode_string(byte[] S) {
 		
-		return concat(left_encode(S.length), S);
+		return concat(left_encode(S.length * 8), S);
 		
 	}
+	
+	
 	/*bytepad(X, w):
 		Validity Conditions: w > 0
 		1. z = left_encode(w) || X.
-		2. while len(z) mod 8 ≠ 0: (byte driven model, len(z) in bits is always multiple of 8)
+		2. while len(z) mod 8 ≠ 0: (byte arrays always multiple of 8 bits)
 			z = z || 0
 		3. while (len(z)/8) mod w ≠ 0:
 			z = z || 00000000
@@ -142,7 +144,7 @@ public class sha3 {
 		
 		byte[] w_encode = left_encode(w);
 		byte[] z = concat(w_encode, X);
-		byte[] result = new byte[w]; 
+		byte[] result = new byte[w*((w_encode.length + X.length + w -1)/w)]; 
 				
 		for (int i = 0; i< z.length; i++) {
 			if (i < result.length) {
@@ -154,6 +156,7 @@ public class sha3 {
 		return z;
 	}
 	
+	//concatenates two byte arrays
 	private static byte[] concat(byte[] a, byte[] b) {
 		
 		int i, j;
@@ -166,43 +169,63 @@ public class sha3 {
 		}
 		return result;
 	}
+	
+	private static void shake_out(sha3_ctx_t c, byte[] md, int len) {
+	    
+	    int i, j;
+
+	    j = c.pt;
+	    for (i = 0; i < len; i++) {
+	        if (j >= c.rsiz) {
+	        	c.update_q();
+	            keccak(c.st_q);
+	            c.update_b();
+	            j = 0;
+	        }
+	        md[i] = c.st_b[j++];
+	    }
+	    c.pt = j;
+	}
 		
 	public static byte[] sha3(String in, int inlen, byte[] md, int mdlen)
 	{
+		
 	    sha3_ctx_t sha3 = new sha3_ctx_t();
 	    sha3.mdlen = mdlen;
 	    sha3.rsiz = 200 - (2*mdlen);
-	    byte[] in_as_bytes = string_to_byte_array(in);
+	    byte[] in_as_bytes = in.getBytes();
 	    sha3_update(sha3, in_as_bytes, in_as_bytes.length);
 	    sha3_final(md, sha3);
 
 	    return md;
 	}
 
+	
 	public static byte[] cSHAKE256(String X, int L, String N, String S) {
-		byte[] result = new byte[64];
-		int check = 256;
+		if (N.length() > 0 || S.length() > 0)   cshake256 = true;
+		byte[] result = new byte[64]; 
+		sha3_ctx_t sponge = new sha3_ctx_t();
+
+		sponge.mdlen = 32;
+		sponge.rsiz = 136;
+
+		byte[] bytepad_ns = bytepad( concat(encode_string(N.getBytes()),encode_string(S.getBytes())), 136 );
 		
-		
-		
-		if (N.length() < check && S.length() < check) {
-			if (N == "" && S == "") {
-				byte[] tempX = concat(X.getBytes(), new byte[(byte)0xF8]);
-				String newX = new String(tempX);
-				result = sha3(newX, newX.length(), new byte[64], 64);
-			} else {
-				
-				byte[] temp = bytepad(concat(encode_string(N.getBytes()), encode_string(S.getBytes())), 136);
-				
-				byte[] temp2 = concat(temp, X.getBytes());
-				result = sha3(new String(temp2), temp2.length, result, result.length);
-			}
-		} else {
-			System.out.print("Size of input greater than hash limitations");
-		}
-		
+		sha3_update( sponge, bytepad_ns, 136 );
+		sha3_update( sponge, X.getBytes(), X.length());
+		if (cshake256) 	sponge.st_b[sponge.pt] ^= 0x04; 
+		else sponge.st_b[sponge.pt] ^= 0x1F;
+		sponge.st_b[sponge.rsiz - 1] ^= (byte)0x80;
+		sponge.update_q();
+		keccak(sponge.st_q);
+		sponge.update_b();
+		sponge.pt = 0;
+		shake_out(sponge, result, result.length);
+
 		return result;
+
 	}
+
 	public static byte[] kmacxof256(String K, String X, int L, String S) {
 		
 		
@@ -219,17 +242,6 @@ public class sha3 {
 		
 		
 		return result;
-	}
-	
-	private static byte[] string_to_byte_array(String input) {
-		
-		byte[] output = new byte[input.length()];
-		
-		for (int i=0; i < input.length(); i++) {
-			output[i] = (byte) input.charAt(i);
-		}
-		
-		return output;
 	}
 	
 	private static long ROTL(long x, int y) {
@@ -249,98 +261,94 @@ public class sha3 {
 		long t;
 		int j, i, r;
 		long bc[] = new long[5];
-		
-//		for (int k=0; k < st.length; k++) {
-//	    	System.out.printf("%x ", st[k]);
-//	    }
-//	    System.out.println();
-	    
-	    System.out.println("Little Endian");
-	    for (int k=0; k < st.length; k++) {
-	    	st[k] = endian_conversion(st[k]);
-	    }
-	    System.out.println();
 
-	    //Actual iteration
+//			for (int k=0; k < st.length; k++) {
+//			    System.out.printf("%x ", st[k]);
+//			    }
+//			    System.out.println();
+		   
+		System.out.println("Little Endian");
+		for (int k=0; k < st.length; k++) {
+		    st[k] = endian_conversion(st[k]);
+		}
+		System.out.println();
+
+		//Actual iteration
 		for(r = 0; r < KECCAKF_ROUNDS; r++) {
-			
+
 			System.out.println("Theta:");
-			
+
 			//Theta
 			for(i = 0; i < 5; i++) {
-				bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
+					bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
 			}
-			
+
 			for(i = 0; i < 5; i++) {
-				t = bc[(i + 4) % 5] ^ ROTL(bc[(i + 1) % 5], 1);
-				for(j = 0; j < 25; j += 5) {
-					st[j + i] ^= t;
-				}
+					t = bc[(i + 4) % 5] ^ ROTL(bc[(i + 1) % 5], 1);
+					for(j = 0; j < 25; j += 5) {
+						st[j + i] ^= t;
+					}
 			}
-//			for (int k=0; k < st.length; k++) {
-//		    	System.out.printf("%x ", st[k]);
-//		    }
-//		    System.out.println();
-			
+
+
 		    System.out.println("Rho Pi");
-		    
-			//Rho Pi
-			t = st[1];
-			for(i = 0; i <  KECCAKF_ROUNDS; i++) {
-				j = piln[i];
-				bc[0] = st[j];
-				st[j] = ROTL(t, rotc[i]);
-				t = bc[0];
+		   
+		    //Rho Pi
+		    t = st[1];
+		    for(i = 0; i <  KECCAKF_ROUNDS; i++) {
+		    	j = piln[i];
+		    	bc[0] = st[j];
+		    	st[j] = ROTL(t, rotc[i]);
+		    	t = bc[0];
 			}
-			
+
 //			for (int k=0; k < st.length; k++) {
-//		    	System.out.printf("%x ", st[k]);
-//		    }
-//		    System.out.println();
-			
+//			    System.out.printf("%x ", st[k]);
+//			    }
+//			    System.out.println();
+
 		    System.out.println("Chi: ");
-		    
+		   
 			//Chi
 			for(j = 0; j < 25; j += 5) {
-				
+	
 				for(i = 0; i <  5; i++) {
 					bc[i] = st[j + i];
 				}
-				
 				for(i = 0; i <  5; i++) {
 					st[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
 				}
 			}
-			
+
 //			for (int k=0; k < st.length; k++) {
-//		    	System.out.printf("%x ", st[k]);
-//		    }
-//		    System.out.println();
-			
-		    
+//			    System.out.printf("%x ", st[k]);
+//			    }
+//			    System.out.println();
+
+		   
 		    System.out.println("Iota: ");
-			//Iota
-			st[0] ^= keccak_consts[r];
-			
-			for (int k=0; k < st.length; k++) {
+		    //Iota
+		    st[0] ^= keccak_consts[r];
+
+		    for (int k=0; k < st.length; k++) {
 		    	System.out.printf("%x ", st[k]);
 		    }
 		    System.out.println();
 		}
-		
+
 		System.out.println("End Keccak: ");
-		
+
 		for (int k=0; k < st.length; k++) {
-	    	st[k] = endian_conversion(st[k]);
-	    }
-			
+		    st[k] = endian_conversion(st[k]);
+		    }
+
 		for (int k=0; k < st.length; k++) {
-			System.out.printf("%x ", st[k]);
+		System.out.printf("%x ", st[k]);
 		}
 		System.out.println();
-		
+
 		return st;
-	}
+}
 	
     private static class sha3_ctx_t {
         
@@ -355,10 +363,6 @@ public class sha3 {
         }
         
         private void update_q( ) {
-        	for(int x=0; x<this.st_b.length; x++) {
-        		System.out.printf("%x ", this.st_b[x]);
-        	}
-        	System.out.println();
         	
         	for (int i=0; i < this.st_q.length; i++) {
         		this.st_q[i] = ((((long)st_b[i*8]) <<56) & 0xFF00000000000000L) | ((((long)st_b[i*8 + 1]) <<48) & 0x00FF000000000000L) |

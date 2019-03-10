@@ -2,3 +2,5 @@
 /sha3.class
 /sha3$sha3_ctx_t.class
 /sha3_ctx_t.class
+/ECDHIES.class
+/TestDriver.class
