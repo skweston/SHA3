@@ -4,7 +4,7 @@
 
 /**
  * 
- * @author James Haines-Temons, Shannon Weston additional credits to Paulo Baretto and 
+ * @author James Haines-Temons, Shannon Weston additional credits to Paulo Baretto and Markku-Juhani O. Saarinen for c implimentations and advice
  *
  */
 
@@ -226,7 +226,7 @@ public class sha3 {
 
 	}
 
-	public static byte[] kmacxof256(String K, String X, int L, String S) {
+	public static byte[] KMACXOF256(String K, String X, int L, String S) {
 		
 		
 		byte[] result = new byte[64];
