@@ -4,7 +4,7 @@
 
 /**
  * 
- * @author James Haines-Temons, Shannon Weston additional credits to Paulo Baretto and Markku-Juhani O. Saarinen for c implimentations and advice
+ * @author James Haines-Temons, Shannon Weston additional credits to Paulo Baretto and Markku-Juhani O. Saarinen for implimentations and advice
  *
  */
 
