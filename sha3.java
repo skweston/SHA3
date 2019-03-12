@@ -200,7 +200,6 @@ public class sha3 {
 	    return md;
 	}
 
-	
 	public static byte[] cSHAKE256(String X, int L, String N, String S) {
 		if (N.length() > 0 || S.length() > 0)   cshake256 = true;
 		byte[] result = new byte[64]; 
@@ -223,12 +222,9 @@ public class sha3 {
 		shake_out(sponge, result, result.length);
 
 		return result;
-
 	}
 
 	public static byte[] KMACXOF256(String K, String X, int L, String S) {
-		
-		
 		byte[] result = new byte[64];
 		/*
 		newX = bytepad(encode_string(K), 136) || X || right_encode(0).
@@ -257,7 +253,7 @@ public class sha3 {
 	}
 	
 	private static long[] keccak(long st[]) {
-		System.out.println("Keccak");
+		//System.out.println("Keccak");
 		long t;
 		int j, i, r;
 		long bc[] = new long[5];
@@ -267,16 +263,16 @@ public class sha3 {
 //			    }
 //			    System.out.println();
 		   
-		System.out.println("Little Endian");
+		//System.out.println("Little Endian");
 		for (int k=0; k < st.length; k++) {
 		    st[k] = endian_conversion(st[k]);
 		}
-		System.out.println();
+		//System.out.println();
 
 		//Actual iteration
 		for(r = 0; r < KECCAKF_ROUNDS; r++) {
 
-			System.out.println("Theta:");
+			//System.out.println("Theta:");
 
 			//Theta
 			for(i = 0; i < 5; i++) {
@@ -291,7 +287,7 @@ public class sha3 {
 			}
 
 
-		    System.out.println("Rho Pi");
+		    //System.out.println("Rho Pi");
 		   
 		    //Rho Pi
 		    t = st[1];
@@ -307,7 +303,7 @@ public class sha3 {
 //			    }
 //			    System.out.println();
 
-		    System.out.println("Chi: ");
+		   // System.out.println("Chi: ");
 		   
 			//Chi
 			for(j = 0; j < 25; j += 5) {
@@ -326,26 +322,26 @@ public class sha3 {
 //			    System.out.println();
 
 		   
-		    System.out.println("Iota: ");
+		    //System.out.println("Iota: ");
 		    //Iota
 		    st[0] ^= keccak_consts[r];
 
-		    for (int k=0; k < st.length; k++) {
+		   /* for (int k=0; k < st.length; k++) {
 		    	System.out.printf("%x ", st[k]);
 		    }
-		    System.out.println();
+		    System.out.println();*/
 		}
 
-		System.out.println("End Keccak: ");
+		//System.out.println("End Keccak: ");
 
 		for (int k=0; k < st.length; k++) {
 		    st[k] = endian_conversion(st[k]);
 		    }
 
-		for (int k=0; k < st.length; k++) {
+		/*for (int k=0; k < st.length; k++) {
 		System.out.printf("%x ", st[k]);
 		}
-		System.out.println();
+		System.out.println();*/
 
 		return st;
 }
