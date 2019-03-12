@@ -145,7 +145,7 @@ public class sha3 {
 		
 		byte[] w_encode = left_encode(w);
 		byte[] z = concat(w_encode, X);
-		byte[] result = new byte[w*((w_encode.length + X.length + w -1)/w)]; 
+		byte[] result = new byte[w_encode.length + X.length]; //tried to fix the size of the returned result BUT it would truncate off any zeros :-(
 				
 		for (int i = 0; i< z.length; i++) {
 			if (i < result.length) {
