@@ -10,7 +10,7 @@ public class ECDHIES {
 	private static PointOnCurve G = new PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
 	
 	public ECDHIES() {
-		
+		//comment
 	}
 
 	public static void createKeyPair(String passphrase) {

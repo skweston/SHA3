@@ -34,7 +34,7 @@ public class sha3 {
 	
 	
 	public sha3() {
-		super();
+		super(); //
 	}
 	
 	private static int sha3_update(sha3_ctx_t c, byte[] data, int len) {
