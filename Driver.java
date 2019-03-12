@@ -53,7 +53,7 @@ public class Driver {
 			int L = 0;
 			String N = "";
 			String S = "";
-			byte[] b = sha3.cSHAKE256(input, L, N, S);
+			byte[] b = sha3.cSHAKE256(input.getBytes(), L, N, S);
 			for(int z = 0; z < b.length; z++) {
 				System.out.printf("%x", b[z]);
 			}
@@ -71,7 +71,7 @@ public class Driver {
 					"A0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7";
 			String output = "FF7B171F1E8A2B24683EED37830EE797538BA8DC563F6DA1E667391A75EDC02CA633079F81CE12A25F45615EC89972031D18337331D24CEB8F8CA8E6A19FD98B";
 			int L = 512;
-			byte[] b = sha3.KMACXOF256(key, input, L, S);
+			byte[] b = sha3.KMACXOF256(key.getBytes(), input.getBytes(), L/8, S);
 			for(int z = 0; z < b.length; z++) {
 				System.out.printf("%x", b[z]);
 			}
@@ -229,7 +229,7 @@ public class Driver {
 		String pass = dataScan.next();
 		String rand = b.toString(); //this is still wrong
 		String key = rand.concat(pass);
-		byte[] keka = sha3.KMACXOF256(key, "", 1024, "S");
+		byte[] keka = sha3.KMACXOF256(key.getBytes(), "".getBytes(), 1024, "S");
 		System.out.println("keka");
 		for(int z = 0; z < keka.length; z++) {
 			System.out.printf("%x", keka[z]);
