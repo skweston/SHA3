@@ -62,13 +62,13 @@ public class ECDHIES {
 	
 	public static PointOnCurve addPoints(PointOnCurve a, PointOnCurve b) {
 		BigInteger xNum = a.myX.multiply(b.myY).add(a.myY.multiply(b.myX)).mod(p);
-		BigInteger xDom = d.multiply(a.myX).multiply(b.myX).multiply(a.myY).multiply(b.myY).add(BigInteger.ONE).mod(p);
+		BigInteger xDnom = d.multiply(a.myX).multiply(b.myX).multiply(a.myY).multiply(b.myY).add(BigInteger.ONE).mod(p);
 		
 		BigInteger yNum = a.myY.multiply(b.myY).subtract(a.myX.multiply(b.myX)).mod(p);
-		BigInteger yDom = BigInteger.ONE.subtract(d.multiply(a.myX.multiply(b.myX.multiply(a.myY.multiply(b.myY))))).mod(p);
+		BigInteger yDnom = BigInteger.ONE.subtract(d.multiply(a.myX.multiply(b.myX.multiply(a.myY.multiply(b.myY))))).mod(p);
 		
-		BigInteger newX = xNum.multiply(xDom.modInverse(p));
-		BigInteger newY = yNum.multiply(yDom.modInverse(p));
+		BigInteger newX = xNum.multiply(xDnom.modInverse(p));
+		BigInteger newY = yNum.multiply(yDnom.modInverse(p));
 		
 		return new PointOnCurve(newX, newY);
 	}
