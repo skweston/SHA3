@@ -42,6 +42,7 @@ public class sha3 {
 		int i, j;
 
 	    j = c.pt;
+	    System.out.println(j);
 	    for (i = 0; i < len; i++) {
 	    	
 	        if (i < data.length) c.st_b[j++] ^= data[i];
@@ -201,7 +202,7 @@ public class sha3 {
 	}
 
 	
-	public static byte[] cSHAKE256(String X, int L, String N, String S) {
+	public static byte[] cSHAKE256(byte[] X, int L, String N, String S) {
 		if (N.length() > 0 || S.length() > 0)   cshake256 = true;
 		byte[] result = new byte[64]; 
 		sha3_ctx_t sponge = new sha3_ctx_t();
@@ -209,10 +210,16 @@ public class sha3 {
 		sponge.mdlen = 32;
 		sponge.rsiz = 136;
 
+		/*This ridiculous line of code loses any trailing zeros in the array it builds*/
 		byte[] bytepad_ns = bytepad( concat(encode_string(N.getBytes()),encode_string(S.getBytes())), 136 );
 		
 		sha3_update( sponge, bytepad_ns, 136 );
-		sha3_update( sponge, X.getBytes(), X.length());
+		sha3_update( sponge, X, X.length );
+		
+		
+//		if (kmac) sha3_update(sponge, right_encode(0), 2 /*length of right_encode(0)*/);
+		
+		
 		if (cshake256) 	sponge.st_b[sponge.pt] ^= 0x04; 
 		else sponge.st_b[sponge.pt] ^= 0x1F;
 		sponge.st_b[sponge.rsiz - 1] ^= (byte)0x80;
@@ -226,19 +233,27 @@ public class sha3 {
 
 	}
 
-	public static byte[] KMACXOF256(String K, String X, int L, String S) {
-		
-		
+	public static byte[] KMACXOF256(byte[] K, byte[] X, int L, String S) {
+		kmac = true;
+		byte[] bp_k = new byte[136];
 		byte[] result = new byte[64];
 		/*
 		newX = bytepad(encode_string(K), 136) || X || right_encode(0).
 		return cSHAKE256(newX, L, “KMAC”, S).
 		*/
-		byte[] encode_K = encode_string(K.getBytes());
-		byte[] concat1 = concat(encode_K, X.getBytes());
-		byte[] concat2 = concat(concat1, right_encode(0));
-		String newX = new String(concat2);
+		byte[] encode_K = bytepad(encode_string(K), 136);
+		for (int i = 0; i < encode_K.length; i++) {
+			bp_k[i] = encode_K[i];
+		}
+		byte[] concat1 = concat(bp_k, X);
+		byte[] newX = concat(concat1, right_encode(0));
 		result = cSHAKE256(newX, L, "KMAC", S);
+		
+		/* Test print for kmacxof256 input manipulations. */
+		for (byte b : X) {
+			System.out.printf("%x ", b);
+		}
+		System.out.println(bp_k.length);
 		
 		
 		return result;
@@ -257,17 +272,12 @@ public class sha3 {
 	}
 	
 	private static long[] keccak(long st[]) {
-		System.out.println("Keccak");
+		
 		long t;
 		int j, i, r;
 		long bc[] = new long[5];
 
-//			for (int k=0; k < st.length; k++) {
-//			    System.out.printf("%x ", st[k]);
-//			    }
-//			    System.out.println();
 		   
-		System.out.println("Little Endian");
 		for (int k=0; k < st.length; k++) {
 		    st[k] = endian_conversion(st[k]);
 		}
@@ -276,7 +286,6 @@ public class sha3 {
 		//Actual iteration
 		for(r = 0; r < KECCAKF_ROUNDS; r++) {
 
-			System.out.println("Theta:");
 
 			//Theta
 			for(i = 0; i < 5; i++) {
@@ -290,8 +299,6 @@ public class sha3 {
 					}
 			}
 
-
-		    System.out.println("Rho Pi");
 		   
 		    //Rho Pi
 		    t = st[1];
@@ -302,12 +309,6 @@ public class sha3 {
 		    	t = bc[0];
 			}
 
-//			for (int k=0; k < st.length; k++) {
-//			    System.out.printf("%x ", st[k]);
-//			    }
-//			    System.out.println();
-
-		    System.out.println("Chi: ");
 		   
 			//Chi
 			for(j = 0; j < 25; j += 5) {
@@ -320,20 +321,10 @@ public class sha3 {
 				}
 			}
 
-//			for (int k=0; k < st.length; k++) {
-//			    System.out.printf("%x ", st[k]);
-//			    }
-//			    System.out.println();
-
 		   
-		    System.out.println("Iota: ");
 		    //Iota
 		    st[0] ^= keccak_consts[r];
 
-		    for (int k=0; k < st.length; k++) {
-		    	System.out.printf("%x ", st[k]);
-		    }
-		    System.out.println();
 		}
 
 		System.out.println("End Keccak: ");
@@ -343,7 +334,7 @@ public class sha3 {
 		    }
 
 		for (int k=0; k < st.length; k++) {
-		System.out.printf("%x ", st[k]);
+			System.out.printf("%x ", st[k]);
 		}
 		System.out.println();
 
@@ -375,12 +366,18 @@ public class sha3 {
         
         private void update_b() {
         	int i, j;
+        	for (byte b: this.st_b) {
+        		System.out.printf("%x ", b);
+        	}
+        	System.out.println();
         	
+        	System.out.println();
         	for(i=0; i < st_q.length; i++) {
         		for (j=0; j<8; j++) {
         			st_b[j + (8*i)] = ((byte) (st_q[i] >>> (64 - ((1+j)*8)))); 
         		}
         	}
+        	
         }
     }
 }
