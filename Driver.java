@@ -4,6 +4,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.Scanner;
+import static java.nio.file.StandardOpenOption.*;
+import java.nio.file.*;
+import java.io.*;
 
 public class Driver {
 	//Driver
@@ -212,35 +215,44 @@ public class Driver {
 	 * cryptogram: (z, c, t)
 	 */ 
 	private static void symmetricEncrypt() {
-		SecureRandom random = new SecureRandom();
-		byte[] b = new byte[512];
-		random.nextBytes(b);
 		
-		System.out.println("b");
-		for(int z = 0; z < b.length; z++) {
-			System.out.printf("%x", b[z]);
-		}
-		System.out.println();
+		//Get integer random and convert to a byte array.
+		SecureRandom random = new SecureRandom();
+		int z = random.nextInt(512);
+		int n = 1 , i = 0;
+		while (1 << 8*n <= z) n++;
+		byte[] z_as_byte = new byte[n--];
+		do { 
+			z_as_byte[n - i] = (byte) ((z >>> 8*i) & 0xFFL);
+			i++;
+		} while (i <= n);
+		
+//		System.out.println("b");
+//		for(int z = 0; z < b.length; z++) {
+//			System.out.printf("%x", b[z]);
+//		}
+//		System.out.println();
 		
 		new sha3();
 		
 		Scanner dataScan = new Scanner(System.in);
-		System.out.println("Insert Passphrase for Encryption");
+		System.out.println("Insert Passphrase for Encryption:");
 		String pass = dataScan.next();
-		String rand = b.toString(); //this is still wrong
-		String key = rand.concat(pass);
-		byte[] keka = sha3.KMACXOF256(key.getBytes(), "".getBytes(), 1024, "S");
-		System.out.println("keka");
-		for(int z = 0; z < keka.length; z++) {
-			System.out.printf("%x", keka[z]);
-		}
-		System.out.println();
+		System.out.println("Type message for Encryption:");
+		String message = dataScan.next();
+		byte[] key = concat(z_as_byte, pass.getBytes());
+		byte[] keka = sha3.KMACXOF256(key, "".getBytes(), 1024/8 /* for bytes not bits*/, "S");
+//		System.out.println("keka");
+//		for(int z = 0; z < keka.length; z++) {
+//			System.out.printf("%x", keka[z]);
+//		}
+//		System.out.println();
 		
-		System.out.println("length: " + keka.length);
+//		System.out.println("length: " + keka.length);
 		byte[] ke = new byte[keka.length/2];
 		byte[] ka = new byte[keka.length/2];
 		
-		for(int i = 0; i < keka.length/2; i++) {
+		for(i = 0; i < keka.length/2; i++) {
 			int j = 0;
 			if(i < keka.length/2) {
 				ke[j++] = keka[i];
@@ -249,28 +261,48 @@ public class Driver {
 			}
 		}
 		
-		String input = "";
-		char[] ins = input.toCharArray();
-		System.out.println("ke");
-		for(int z = 0; z < ke.length; z++) {
-			System.out.printf("%x", ke[z]);
-		}
-		System.out.println();
-		System.out.println(ke.length);
-		System.out.println(ka.length);
-		System.out.println("ka");
-		for(int z = 0; z < ka.length; z++) {
-			System.out.printf("%x", ka[z]);
-		}
-		System.out.println();
-		/*byte[] c = sha3.KMACXOF256(ke.toString(), "", input.length(), "SKE");
+//		String input = "";
+//		char[] ins = input.toCharArray();
+//		System.out.println("ke");
+//		for(int z = 0; z < ke.length; z++) {
+//			System.out.printf("%x", ke[z]);
+//		}
+//		System.out.println();
+//		System.out.println(ke.length);
+//		System.out.println(ka.length);
+//		System.out.println("ka");
+//		for(int z = 0; z < ka.length; z++) {
+//			System.out.printf("%x", ka[z]);
+//		}
+//		System.out.println();
+		byte[] c = sha3.KMACXOF256(ke, "".getBytes(), message.length(), "SKE");
 		
-		for(int i = 0; i < c.length; i++) {
-			c[i] ^= ins[i];
+		for(i = 0; i < c.length; i++) {
+			c[i] ^= message.getBytes()[i];
 		}
 		
-		byte[] t = sha3.KMACXOF256(ka.toString(), input, 512, "SKA");*/
+		byte[] t = sha3.KMACXOF256(ka, message.getBytes(), 512/8, "SKA");
 		//write cryptogram to file
+		
+	    Path p = Paths.get("./cryptogram.txt");
+	    int pointer = 0;
+	    try (OutputStream out = new BufferedOutputStream(
+	      Files.newOutputStream(p, CREATE, APPEND))) {
+	      out.write(z_as_byte, pointer, z_as_byte.length);
+	      pointer += z_as_byte.length;
+	      out.write("\n".getBytes(), pointer, "\n".length());
+	      pointer += "\n".length();
+	      out.write(c, pointer, c.length);
+	      pointer += t.length;
+	      out.write("\n".getBytes(), pointer, "\n".length());
+	      pointer += "\n".length();
+	      out.write(t, pointer, t.length);
+	      
+	      
+	    } catch (IOException x) {
+	      System.err.println(x);
+	    }
+		
 		dataScan.close();
 	}
 	
@@ -388,6 +420,25 @@ public class Driver {
 	 */
 	private static void verifySignature() {
 
+	}
+	
+	/**
+	 * concatenates two byte arrays
+	 * @param a		The string desired to be in the front of the resulting array
+	 * @param b		The string that will be at the back of the resulting array
+	 * @return		"a" + "b"
+	 */
+	private static byte[] concat(byte[] a, byte[] b) {
+		
+		int i, j;
+		byte[] result = new byte[a.length + b.length];
+		for (i=0; i < a.length; i++) {
+			result[i] = a[i];
+		}
+		for (j = 0; j < b.length; j++) {
+			result[i+j] = b[j];
+		}
+		return result;
 	}
 
 	//Runner of test code

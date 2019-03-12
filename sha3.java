@@ -191,6 +191,7 @@ public class sha3 {
 		}
 		return result;
 	}
+	
 	/**
 	 * 
 	 * @param c		a sha3 context that gets passed around and keeps track of the algorithm output.
