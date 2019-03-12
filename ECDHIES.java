@@ -33,14 +33,14 @@ public class ECDHIES {
 	
 	private static byte[] generateS(String pass) {
 		new sha3();
-		byte[] b = sha3.KMACXOF256(pass, "", 512, "K");
+		//byte[] b = sha3.KMACXOF256(pass, "", 512, "K");
 		
-		for(int z = 0; z < b.length; z++) {
+		/*for(int z = 0; z < b.length; z++) {
 			System.out.printf("%x ", b[z]);
 		}
 		System.out.println();
 		
-		return b;
+		return b;*/
 	}
 	
 	private static void generateV(byte[] s) {

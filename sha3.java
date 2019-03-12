@@ -4,7 +4,7 @@
 
 /**
  * 
- * @author James Haines-Temons, Shannon Weston additional credits to Paulo Baretto and Markku-Juhani O. Saarinen for c implimentations and advice
+ * @author James Haines-Temons, Shannon Weston additional credits to Paulo Baretto and Markku-Juhani O. Saarinen for implimentations and advice
  *
  */
 
@@ -36,12 +36,19 @@ public class sha3 {
 	public sha3() {
 		super(); //
 	}
-	
+	/**
+	 * The workhorse of this program in combination with the keccak algorithm
+	 * @param c			a sha3 context used to store data.
+	 * @param data		the data that is to be copied into the sha3 context.
+	 * @param len		the length of the block being copied into the sha3 context.
+	 * @return			return 1 for no reason. was used in testing to indicate success of the method.
+	 */
 	private static int sha3_update(sha3_ctx_t c, byte[] data, int len) {
 
 		int i, j;
 
 	    j = c.pt;
+//	    System.out.println(j);
 	    for (i = 0; i < len; i++) {
 	    	
 	        if (i < data.length) c.st_b[j++] ^= data[i];
@@ -58,6 +65,12 @@ public class sha3 {
 	    return 1;
 	}
 	
+	
+	/**
+	 * 
+	 * @param md	the array storing the hashed output of the program.
+	 * @param c		the sha3 context that houses the hash data.
+	 */
 	private static void sha3_final(byte[] md, sha3_ctx_t c)
 	{
 	    int i;
@@ -123,10 +136,14 @@ public class sha3 {
 		return O;
 	}
 	
-	
+	/**
+	 * 
+	 * @param S		The byte array to be encoded.
+	 * @return		The encoded byte array.
+	 */
 	private static byte[] encode_string(byte[] S) {
 		
-		return concat(left_encode(S.length * 8), S);
+		return concat(left_encode(S.length * 8), S); //figuring out that this was actually in bits gave me GERD
 		
 	}
 	
@@ -144,7 +161,7 @@ public class sha3 {
 		
 		byte[] w_encode = left_encode(w);
 		byte[] z = concat(w_encode, X);
-		byte[] result = new byte[w*((w_encode.length + X.length + w -1)/w)]; 
+		byte[] result = new byte[w_encode.length + X.length]; //tried to fix the size of the returned result BUT it would truncate off any zeros :-(
 				
 		for (int i = 0; i< z.length; i++) {
 			if (i < result.length) {
@@ -156,7 +173,12 @@ public class sha3 {
 		return z;
 	}
 	
-	//concatenates two byte arrays
+	/**
+	 * concatenates two byte arrays
+	 * @param a		The string desired to be in the front of the resulting array
+	 * @param b		The string that will be at the back of the resulting array
+	 * @return		"a" + "b"
+	 */
 	private static byte[] concat(byte[] a, byte[] b) {
 		
 		int i, j;
@@ -169,7 +191,12 @@ public class sha3 {
 		}
 		return result;
 	}
-	
+	/**
+	 * 
+	 * @param c		a sha3 context that gets passed around and keeps track of the algorithm output.
+	 * @param md	the output byte array
+	 * @param len	the length of the output byte array in bytes.
+	 */
 	private static void shake_out(sha3_ctx_t c, byte[] md, int len) {
 	    
 	    int i, j;
@@ -186,7 +213,14 @@ public class sha3 {
 	    }
 	    c.pt = j;
 	}
-		
+	/**
+	 * This function serves no purpose in the program but to be used to test the correctness of Keccak as implemented.	
+	 * @param in		A string message to be converted into a message in keccak
+	 * @param inlen		Length of the input in
+	 * @param md		A byte array that will be used to fill the result of the hash function
+	 * @param mdlen		the lenght of md, not necessary in Java and can be discarded. (With the rest of the function for the purposes of this program)
+	 * @return			md filled with the resulting hash of the message.
+	 */
 	public static byte[] sha3(String in, int inlen, byte[] md, int mdlen)
 	{
 		
@@ -200,7 +234,15 @@ public class sha3 {
 	    return md;
 	}
 
-	public static byte[] cSHAKE256(String X, int L, String N, String S) {
+	/**
+	 * 
+	 * @param X		Byte array representation of a string
+	 * @param L		Length of desired output in bytes
+	 * @param N		Special instruction passed into the hash function as a string.
+	 * @param S		String Signature input from user.
+	 * @return
+	 */
+	public static byte[] cSHAKE256(byte[] X, int L, String N, String S) {
 		if (N.length() > 0 || S.length() > 0)   cshake256 = true;
 		byte[] result = new byte[64]; 
 		sha3_ctx_t sponge = new sha3_ctx_t();
@@ -208,10 +250,16 @@ public class sha3 {
 		sponge.mdlen = 32;
 		sponge.rsiz = 136;
 
+		/*This ridiculous line of code loses any trailing zeros in the array it builds*/
 		byte[] bytepad_ns = bytepad( concat(encode_string(N.getBytes()),encode_string(S.getBytes())), 136 );
 		
 		sha3_update( sponge, bytepad_ns, 136 );
-		sha3_update( sponge, X.getBytes(), X.length());
+		sha3_update( sponge, X, X.length );
+		
+		
+//		if (kmac) sha3_update(sponge, right_encode(0), 2 /*length of right_encode(0)*/);
+		
+		
 		if (cshake256) 	sponge.st_b[sponge.pt] ^= 0x04; 
 		else sponge.st_b[sponge.pt] ^= 0x1F;
 		sponge.st_b[sponge.rsiz - 1] ^= (byte)0x80;
@@ -224,17 +272,35 @@ public class sha3 {
 		return result;
 	}
 
-	public static byte[] KMACXOF256(String K, String X, int L, String S) {
+	/**
+	 * 
+	 * @param K		A byte string Key
+	 * @param X		A byte representation of a message
+	 * @param L		Length of desire output in bytes
+	 * @param S		A String Signature
+	 * @return		Returns a byte array of the hash with the requested byte length.
+	 */
+	public static byte[] KMACXOF256(byte[] K, byte[] X, int L, String S) {
+		kmac = true;
+		byte[] bp_k = new byte[136];
 		byte[] result = new byte[64];
 		/*
 		newX = bytepad(encode_string(K), 136) || X || right_encode(0).
 		return cSHAKE256(newX, L, “KMAC”, S).
 		*/
-		byte[] encode_K = encode_string(K.getBytes());
-		byte[] concat1 = concat(encode_K, X.getBytes());
-		byte[] concat2 = concat(concat1, right_encode(0));
-		String newX = new String(concat2);
+		byte[] encode_K = bytepad(encode_string(K), 136);
+		for (int i = 0; i < encode_K.length; i++) {
+			bp_k[i] = encode_K[i];
+		}
+		byte[] concat1 = concat(bp_k, X);
+		byte[] newX = concat(concat1, right_encode(0));
 		result = cSHAKE256(newX, L, "KMAC", S);
+		
+		/* Test print for kmacxof256 input manipulations. */
+//		for (byte b : X) {
+//			System.out.printf("%x ", b);
+//		}
+//		System.out.println(bp_k.length);
 		
 		
 		return result;
@@ -244,6 +310,12 @@ public class sha3 {
 		return (x << y) | (x >>> (64 - y));
 	}
 	
+	
+	/**
+	 * Endian conversion at the beginning and end of the keccak algorithm
+	 * @param in	a long to be converted
+	 * @return		the converted long
+	 */
 	private static long endian_conversion(long in) {
 		return ((long) (in & 0xFF00000000000000L) >>> 56) | ((long) (in & 0x00FF000000000000L) >>> 40) |
 				((long) (in & 0x0000FF0000000000L) >>> 24) |((long) (in & 0x000000FF00000000L) >>> 8) |
@@ -251,19 +323,16 @@ public class sha3 {
 				((long) (in & 0x000000000000FF00L) << 40) |((long) (in & 0x00000000000000FFL) << 56);
 							 
 	}
-	
+	/**
+	 * The main algorithm of this class for creating hash encryptions.
+	 * @param st	an array of longs long that will be manipulated
+	 * @return		return statement for checking the values originally for debugging.
+	 */
 	private static long[] keccak(long st[]) {
-		//System.out.println("Keccak");
 		long t;
 		int j, i, r;
 		long bc[] = new long[5];
-
-//			for (int k=0; k < st.length; k++) {
-//			    System.out.printf("%x ", st[k]);
-//			    }
-//			    System.out.println();
-		   
-		//System.out.println("Little Endian");
+		
 		for (int k=0; k < st.length; k++) {
 		    st[k] = endian_conversion(st[k]);
 		}
@@ -271,8 +340,6 @@ public class sha3 {
 
 		//Actual iteration
 		for(r = 0; r < KECCAKF_ROUNDS; r++) {
-
-			//System.out.println("Theta:");
 
 			//Theta
 			for(i = 0; i < 5; i++) {
@@ -285,9 +352,6 @@ public class sha3 {
 						st[j + i] ^= t;
 					}
 			}
-
-
-		    //System.out.println("Rho Pi");
 		   
 		    //Rho Pi
 		    t = st[1];
@@ -297,13 +361,6 @@ public class sha3 {
 		    	st[j] = ROTL(t, rotc[i]);
 		    	t = bc[0];
 			}
-
-//			for (int k=0; k < st.length; k++) {
-//			    System.out.printf("%x ", st[k]);
-//			    }
-//			    System.out.println();
-
-		   // System.out.println("Chi: ");
 		   
 			//Chi
 			for(j = 0; j < 25; j += 5) {
@@ -316,20 +373,9 @@ public class sha3 {
 				}
 			}
 
-//			for (int k=0; k < st.length; k++) {
-//			    System.out.printf("%x ", st[k]);
-//			    }
-//			    System.out.println();
-
-		   
-		    //System.out.println("Iota: ");
 		    //Iota
 		    st[0] ^= keccak_consts[r];
 
-		   /* for (int k=0; k < st.length; k++) {
-		    	System.out.printf("%x ", st[k]);
-		    }
-		    System.out.println();*/
 		}
 
 		//System.out.println("End Keccak: ");
@@ -338,14 +384,19 @@ public class sha3 {
 		    st[k] = endian_conversion(st[k]);
 		    }
 
-		/*for (int k=0; k < st.length; k++) {
-		System.out.printf("%x ", st[k]);
-		}
-		System.out.println();*/
+//		for (int k=0; k < st.length; k++) {
+//			System.out.printf("%x ", st[k]);
+//		}
+//		System.out.println();
+
 
 		return st;
 }
-	
+	/**
+	 * Private inner class to house data during encryption
+	 * @author j-hat
+	 *
+	 */
     private static class sha3_ctx_t {
         
         private byte[] st_b = new byte[200];
@@ -358,6 +409,9 @@ public class sha3 {
         	super();
         }
         
+        /**
+         * Updates the array of longs in from the array of bytes.
+         */
         private void update_q( ) {
         	
         	for (int i=0; i < this.st_q.length; i++) {
@@ -369,14 +423,22 @@ public class sha3 {
         	
         }
         
+        /**
+         * updates the array of bytes from the array of longs.
+         */
         private void update_b() {
         	int i, j;
+//        	for (byte b: this.st_b) {
+//        		System.out.printf("%x ", b);
+//        	}
+//        	System.out.println();
         	
         	for(i=0; i < st_q.length; i++) {
         		for (j=0; j<8; j++) {
         			st_b[j + (8*i)] = ((byte) (st_q[i] >>> (64 - ((1+j)*8)))); 
         		}
         	}
+        	
         }
     }
 }
