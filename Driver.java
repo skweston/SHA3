@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -313,26 +312,22 @@ public class Driver {
 	 * accept only iff t' = t
 	 */
 	private static void symmetricDecrypt() {
-		//read in file
-		String z = "";
-		//z = random value
-		//c = 
-		//t = 
-		String c = "";
-		System.out.println("Insert filename to decrypt");
-		Scanner dataScan = new Scanner(System.in);
-		String file = dataScan.next();
-		String input = "";
+		
+		Scanner input = new Scanner(System.in);
+		Scanner file_scanner = null;
+		System.out.println("File Name:");
+		String file_in = input.next();
 		try {
-			input = new String(Files.readAllBytes(Paths.get(file)));
-		} catch (IOException e) {
-			System.out.println("File not found: hashFileInput()");
+			file_scanner = new Scanner(new File(file_in));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		new sha3();
-		String pass = dataScan.next();
-		String key = z.concat(pass);
-		//byte[] m = sha3.KMACXOF256(key, "", c.length(), "S");
+		
+		file_scanner.useDelimiter("\n");
+		String z_string = file_scanner.next();
+		String c_string = file_scanner.next();
+		
 		
 	}
 	
@@ -437,6 +432,15 @@ public class Driver {
 		}
 		for (j = 0; j < b.length; j++) {
 			result[i+j] = b[j];
+		}
+		return result;
+	}
+	
+	private static byte[] get_bytes_from_string(String s) {
+		String[] s_split = s.split(" ");
+		byte[] result = new byte[s_split.length];
+		for (int i = 0; i < s_split.length; i++) {
+			result[i] = new Byte("0x" + s_split[i]);
 		}
 		return result;
 	}
