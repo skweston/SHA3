@@ -283,26 +283,36 @@ public class Driver {
 		byte[] t = sha3.KMACXOF256(ka, message.getBytes(), 512/8, "SKA");
 		//write cryptogram to file
 		
-	    Path p = Paths.get("./cryptogram.txt");
-	    int pointer = 0;
-	    try (OutputStream out = new BufferedOutputStream(
-	      Files.newOutputStream(p, CREATE, APPEND))) {
-	      out.write(z_as_byte, pointer, z_as_byte.length);
-	      pointer += z_as_byte.length;
-	      out.write("\n".getBytes(), pointer, "\n".length());
-	      pointer += "\n".length();
-	      out.write(c, pointer, c.length);
-	      pointer += t.length;
-	      out.write("\n".getBytes(), pointer, "\n".length());
-	      pointer += "\n".length();
-	      out.write(t, pointer, t.length);
-	      
-	      
-	    } catch (IOException x) {
-	      System.err.println(x);
-	    }
+		String z_as_string = string_builder(z_as_byte);
+		String c_as_string = string_builder(c);
+		String t_as_string = string_builder(t);
 		
-		dataScan.close();
+	    String output = z_as_string + "\n" + c_as_string + "\n" + t_as_string;
+		
+	    System.out.println("Enter file name to write: ");
+	    String file_out = dataScan.next();
+	    
+	    BufferedWriter writer = null;
+		try {
+			writer = new BufferedWriter(new FileWriter(file_out));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    try {
+			writer.write(output);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	         
+	    try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    
 	}
 	
 	/* (z, c, t)
@@ -474,6 +484,16 @@ public class Driver {
 			result[i+j] = b[j];
 		}
 		return result;
+	}
+	
+	private static String string_builder(byte[] b) {
+	    StringBuilder sb = new StringBuilder();
+	    for (byte s : b) {
+	        sb.append(String.format("%02X ", s));
+	    }
+	    
+		return sb.substring(0);
+		
 	}
 	
 	private static byte[] get_bytes_from_string(String s) {
