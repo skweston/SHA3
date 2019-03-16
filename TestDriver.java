@@ -103,6 +103,7 @@ public class TestDriver {
 			}
 			
 			byte[] fucker = sha3.KMACXOF256("".getBytes(), "abc".getBytes(), 64, "D");
+			System.out.println(fucker.length);
 			
 			
 //				System.out.printf("%x ", b[z]);

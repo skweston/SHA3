@@ -492,7 +492,7 @@ public class Driver {
 	        sb.append(String.format("%02X ", s));
 	    }
 	    
-		return sb.substring(0);
+		return sb.substring(0, sb.substring(0).length() - 1);
 		
 	}
 	
