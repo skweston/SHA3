@@ -311,8 +311,14 @@ public class Driver {
 	 * t' <- KMACXOF256(ka, m, 512, "SKA")
 	 * accept only iff t' = t
 	 */
+	/**
+	 * Reads bytes from a file. File must be formated with z value on first line as space delimited bytes
+	 * c must also be space delimited bytes on the second line
+	 * t must also be space delimited bytes on the third line
+	 */
 	private static void symmetricDecrypt() {
 		
+		boolean correct = true;
 		Scanner input = new Scanner(System.in);
 		Scanner file_scanner = null;
 		System.out.println("File Name:");
@@ -325,8 +331,42 @@ public class Driver {
 		}
 		
 		file_scanner.useDelimiter("\n");
-		String z_string = file_scanner.next();
-		String c_string = file_scanner.next();
+		byte[] z = get_bytes_from_string(file_scanner.next());
+		byte[] c = get_bytes_from_string(file_scanner.next());
+		byte[] t = get_bytes_from_string(file_scanner.next());
+		
+		System.out.println("Enter the password:");
+		String pw = input.next();
+		
+		byte[] z_pw = concat(z, pw.getBytes());
+		byte[] keka = sha3.KMACXOF256(z_pw, "".getBytes(), 1024/8, "S");
+		int ke_ka_size = keka.length / 2;
+		byte [] ke = new byte[ke_ka_size];
+		byte[] ka = new byte[ke_ka_size];
+		for (int i = 0; i < ke.length; i++) {
+			ke[i] = keka[i];
+			ka[i] = keka[i + ke_ka_size];
+		}
+		
+		byte[] m = sha3.KMACXOF256(ke, "".getBytes(), c.length, "SKE");
+		for (int j = 0; j < m.length; j++) {
+			m[j] ^= c[j];
+		}
+		byte[] t_prime = sha3.KMACXOF256(ka, m, 512/8, "SKA");
+		for (int k = 0; k < t_prime.length; k++) {
+			correct = (t[k] == t_prime[k]);
+		}
+		
+		if (correct) {
+			System.out.println("Password Accepted - Message output:");
+			for (byte b : m) {
+				System.out.printf("%x ", b);
+			}
+			System.out.println();
+		} else {
+			System.out.println("Password Failed.");
+		}
+		
 		
 		
 	}
