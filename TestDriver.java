@@ -91,7 +91,7 @@ public class TestDriver {
 			byte[] b = new byte[32];
 			byte[] c = new byte[1];
 			String input = "";
-			byte[] o123 = new byte[0xC8];
+			byte[] o123 = new byte[0x04];
 			byte[] K = new byte[32];
 			
 			for (int g = 0; g < o123.length; g++) {
@@ -102,7 +102,7 @@ public class TestDriver {
 				K[h] = (byte) (0x40 + h);
 			}
 			
-			byte[] fucker = sha3.KMACXOF256(K, o123, 64, "");
+			byte[] fucker = sha3.KMACXOF256("".getBytes(), "abc".getBytes(), 64, "D");
 			
 			
 //				System.out.printf("%x ", b[z]);

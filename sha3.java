@@ -245,7 +245,7 @@ public class sha3 {
 	 */
 	public static byte[] cSHAKE256(byte[] X, int L, String N, String S) {
 		if (N.length() > 0 || S.length() > 0)   cshake256 = true;
-		byte[] result = new byte[64]; 
+		byte[] result = new byte[L]; 
 		sha3_ctx_t sponge = new sha3_ctx_t();
 
 		sponge.mdlen = 32;
@@ -284,7 +284,8 @@ public class sha3 {
 	public static byte[] KMACXOF256(byte[] K, byte[] X, int L, String S) {
 		kmac = true;
 		byte[] bp_k = new byte[136];
-		byte[] result = new byte[64];
+		byte[] result = new byte[L];
+		
 		/*
 		newX = bytepad(encode_string(K), 136) || X || right_encode(0).
 		return cSHAKE256(newX, L, “KMAC”, S).
