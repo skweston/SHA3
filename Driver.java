@@ -612,6 +612,10 @@ public class Driver {
 		
 		Scanner s = new Scanner(System.in);
 		String c = s.next();
+		if (c != "a" || c!= "b" || c!= "c") {
+			System.out.println("Invalid option: Try again");
+			c = s.next();
+		}
 		switch (c) {
 			case "a":
 				test();
