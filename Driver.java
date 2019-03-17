@@ -179,8 +179,10 @@ public class Driver {
 		}
 		new sha3();
 		byte[] b = new byte[32];//?
-		sha3.sha3(input, input.length(), b, b.length);
+		//sha3.sha3(input, input.length(), b, b.length);
 		//sha3.kmacxof256("404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F", input, 512, "My Tagged Application");
+		
+		b = sha3.KMACXOF256(new byte[0], input.getBytes(), 512/8, "D");
 		System.out.println(input);
 		for(int z = 0; z < b.length; z++) {
 			System.out.printf("%x ", b[z]);
