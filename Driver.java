@@ -16,12 +16,50 @@ import java.io.*;
 public class Driver {
 	//Driver
 	
+	private static String bytesToString(byte[] b) {
+		String s = new String();
+
+		int j = 0;
+		char[] cr = new char[b.length * 2];
+		for(int z = 0; z < b.length; z++) {
+			byte y = b[z];
+			int i = (y >>> 4) & 0x0F;
+			int k = y & 0x0F;
+
+			char c = 'a';
+			char d = 'a';
+			
+			
+			if(i >= 0 && i <= 9) {
+				c = (char) (((int) i) + '0');
+			}
+			
+			if(i >= 10 && i <= 15) {
+				c = (char) ('a' + (char) (((int) i) % 10));
+			}
+			
+			if(k >= 0 && k <= 9) {
+				d = (char) (((int) k) + '0');
+			}
+			
+			if(k >= 10 && k <= 15) {
+				d = (char) ('a' + (char) (((int) k) % 10));
+			}
+			
+			cr[j++] = c;
+			cr[j++] = d;
+		}
+		
+		s = new String(cr);
+
+		return s;
+	}
+	
 	//Test
 	private static void test() {
 		System.out.println("Which algorithm would you like to test?");
 		System.out.println("\ta) Sha3");
-		System.out.println("\tb) cShake");
-		System.out.println("\tc) KMACXOF");
+		//System.out.println("\tb) KMACXOF");
 		Scanner dataScan = new Scanner(System.in);
 		new sha3();
 		
@@ -49,25 +87,10 @@ public class Driver {
 				output = "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a";
 			}
 			sha3.sha3(input, input.length(), b, b.length);
-			for(int z = 0; z < b.length; z++) {
-				System.out.printf("%x", b[z]);
-			}
-			System.out.println();
-			System.out.println("expected output: " + output);
-		} else if(choice.equals("b")) {
-			//cShake
-			//cSHAKE256(String X, int L, String N, String S)
-			String input = "";
-			int L = 0;
-			String N = "";
-			String S = "";
-			byte[] b = sha3.cSHAKE256(input.getBytes(), L, N, S);
-			for(int z = 0; z < b.length; z++) {
-				System.out.printf("%x", b[z]);
-			}
-			System.out.println();
-			//System.out.println("expected output: " + output);
-		} else if(choice.equals("c")) {
+			String outputted = bytesToString(b);
+			System.out.printf("%81s\n", outputted);
+			System.out.printf("%-5s\n", "expected output: " + output);
+		} else if(choice.equals("b")) { //may be deleted
 			//kmacxof
 			//KMACXOF256(String K, String X, int L, String S)
 			//https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/KMACXOF_samples.pdf #5
@@ -79,27 +102,36 @@ public class Driver {
 					"A0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7";
 			String output = "FF7B171F1E8A2B24683EED37830EE797538BA8DC563F6DA1E667391A75EDC02CA633079F81CE12A25F45615EC89972031D18337331D24CEB8F8CA8E6A19FD98B";
 			int L = 512;
-			byte[] b = sha3.KMACXOF256(key.getBytes(), input.getBytes(), L/8, S);
-			for(int z = 0; z < b.length; z++) {
-				System.out.printf("%x", b[z]);
+			byte[] st = key.getBytes();
+			for(int i = 0; i < st.length; i++) {
+				System.out.printf("%x", st[i]);
 			}
 			System.out.println();
-			System.out.println("expected output: " + output);
+			String s = bytesToString(st);
+			System.out.println(s);
+			byte[] b = sha3.KMACXOF256(key.getBytes(), input.getBytes(), L/8, S);
+			
+			
+			String outputted = bytesToString(b);
+			System.out.printf("%82s\n", outputted);
+			System.out.printf("%-5s\n", "expected output: " + output);
 		}
 		
 		dataScan.close();
 	}
 	
-	//Generate Key Pair
-	private static void genKeyPair() { 
+	//Generate Key Pair - Prints public key to console and file
+	private static String genKeyPair() { 
 		new ECDHIES();
 		String s = "";
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Insert passphase for desired key: ");
 		s = sc.next();
-		ECDHIES.createKeyPair(s);
-		ECDHIES.generateG();
+		System.out.println("Insert filename for key storage (without extention): ");
+		String fileName = sc.next();
+		String file = ECDHIES.createKeyPair(s.getBytes(), fileName);
 		sc.close();
+		return file;
 	}
 	
 	//Secure Data
@@ -126,9 +158,7 @@ public class Driver {
 			} else if(choice == "c") {
 				ellipticDecryptText();
 			}
-		}
-		
-		if(choice.equals("b")) {
+		} else if(choice.equals("b")) {
 			System.out.println("Choose an option: ");
 			System.out.println("\ta) Hash File Input");
 			System.out.println("\tb) Symmetrically Secure File");
@@ -165,9 +195,9 @@ public class Driver {
 		dataScan.close();
 	}
 	
-	//Secure Data
+	//Secure Data - Prints hash to console.
 	private static void hashFileInput() { 
-		System.out.println("Input filename: ");
+		System.out.println("Input filename (including extension): ");
 		Scanner s = new Scanner(System.in);
 		String file = s.next();
 		String input = "";
@@ -191,27 +221,21 @@ public class Driver {
 		s.close();
 	}
 	
-	//Secure Data - not good yet
+	//Secure Data - Prints hash to console.
 	private static void hashTextInput() { 
 		System.out.println("Input text to be hashed in one line and press Enter: ");
 		Scanner s = new Scanner(System.in);
 		StringBuilder str = new StringBuilder();
-		while(s.hasNext()) {
-			String var = s.next();
-			System.out.println(var);
-			if(var.equals(" ")) {
-				break;
-			}
-			str.append(var);
-		}
+		str.append(s.next());
+		byte[] input = str.toString().getBytes();
+		int L = 512;
+		String S = "D";
 		
-		System.out.println(str.toString());
+		new sha3();
+		byte[] b = sha3.KMACXOF256(new byte[0], input, L/8, S);
+		String output = bytesToString(b);
+		System.out.println(output);
 		s.close(); 
-		//pass to sha3
-		/*for(int z = 0; z < b.length; z++) {
-			System.out.printf("%x ", b[z]);
-		}
-		System.out.println();*/
 	}
 	
 	/*
@@ -321,12 +345,13 @@ public class Driver {
 		boolean correct = true;
 		Scanner input = new Scanner(System.in);
 		Scanner file_scanner = null;
-		file_scanner.useDelimiter("\n");
+		
 		
 		System.out.println("File Name:");
 		String file_in = input.next();
 		try {
 			file_scanner = new Scanner(new File(file_in));
+			file_scanner.useDelimiter("\n");
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -398,7 +423,7 @@ public class Driver {
 	 * cryptogram: (Z, c, t)
 	 */
 	private static void ellipticEncryptFile() {
-		System.out.println("Input filename: ");
+		System.out.println("Input name of file to encrypt: ");
 		Scanner s = new Scanner(System.in);
 		String file = s.next();
 		String input = "";
@@ -408,15 +433,79 @@ public class Driver {
 			System.out.println("File not found: ellipticEncryptFile()");
 			e.printStackTrace();
 		}
+		
+		SecureRandom random = new SecureRandom();
+		int k = random.nextInt(512);
+		int n = 1 , i = 0;
+		while (1 << 8 * n <= k) n++;
+		byte[] k_as_byte = new byte[n--];
+		do { 
+			k_as_byte[n - i] = (byte) ((k >>> 8 * i) & 0xFFL);
+			i++;
+		} while (i <= n);
 		new sha3();
-		byte[] b = new byte[32];//?
-		sha3.sha3(input, input.length(), b, b.length);
-		//sha3.kmacxof256("404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F", input, 512, "My Tagged Application");
-		System.out.println(input);
-		for(int z = 0; z < b.length; z++) {
-			System.out.printf("%x ", b[z]);
+		byte[] keka = new byte[1024/8];//?
+		ECDHIES.PointOnCurve W = new ECDHIES.PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
+		ECDHIES.PointOnCurve V = new ECDHIES.PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
+		//read in V from keyFile
+		
+		System.out.println("Do you have a key file prepare: ");
+		System.out.println("\ta) No");
+		System.out.println("\tb) Yes");
+		String choice = s.next();
+		String publicK = "";
+		if(choice.equals("a")) {
+			file = genKeyPair();
+		} else if(choice.equals("b")) {
+			System.out.println("Input File Name (with extension): ");
+			file = s.next();
+			//read in only public key
 		}
-		System.out.println();
+		
+		try {
+			publicK = new String(Files.readAllBytes(Paths.get(file + ".txt")));
+		} catch (IOException e) {
+			System.out.println("File not found: ellipticEncryptFile()");
+			e.printStackTrace();
+		}
+		System.out.println(file);
+		System.out.println(publicK);
+		V.myY = new BigInteger(publicK.getBytes());
+		System.out.println(V.myY);
+			
+		
+		
+
+		W = V;
+		
+		for(int l = 0; l < k_as_byte.length; l++) {
+			for(int j = 0; j < 8; j++) {
+				W = ECDHIES.addPoints(W, W);
+				int b = (int) (k_as_byte[l] >> j) & 0x01; //does this sign extend correctly?
+				if(b == 1) {
+					W = ECDHIES.addPoints(W, V);				
+				}
+			}
+		}
+		
+		keka = sha3.KMACXOF256(W.myX.toByteArray(), "".getBytes(), 1024/8, "P");
+		/*System.out.println(input);
+		for(int z = 0; z < keka.length; z++) {
+			System.out.printf("%x ", keka[z]);
+		}
+		System.out.println();*/
+		
+		byte[] ke = new byte[keka.length/2];
+		byte[] ka = new byte[keka.length/2];
+		
+		byte[] c = sha3.KMACXOF256(ke, "".getBytes(), input.getBytes().length/8, "PKE");
+		//xor c with with message
+		byte[] t = sha3.KMACXOF256(ka, input.getBytes(), 512/8, "PKA");
+		
+		//calculate Z
+		
+		
+		//output Z, c, t
 		s.close();
 	}
 	
@@ -540,7 +629,6 @@ public class Driver {
 		}
 		
 	}
-	
 
 	/*
 	 * U <- x*G + h*V
@@ -598,37 +686,29 @@ public class Driver {
 
 	//Runner of test code
 	public static void main(String[] args) {
-		System.out.println("hello");
+		Scanner s = new Scanner(System.in);
+		String c = "";
 		System.out.println("Select an option:");
-		
+			
 		//For Demo
 		System.out.println("\ta) Test algorithms");
-		
-		//Part 1
+
 		System.out.println("\tb) Generate Key Pair");
-		
-		//Part 1 Bonus
+			
 		System.out.println("\tc) Secure Data");
+			
+		System.out.println("\td) Exit");
+		c = s.next();
+		if(c.equals("a")) {
+			test();
+		} else if(c.equals("b")) {
+			genKeyPair();
+		} else if(c.equals("c")) {
+			secureData();
+		}
 		
-		Scanner s = new Scanner(System.in);
-		String c = s.next();
-		if (c != "a" || c!= "b" || c!= "c") {
-			System.out.println("Invalid option: Try again");
-			c = s.next();
-		}
-		switch (c) {
-			case "a":
-				test();
-				break;
-			case "b": 
-				genKeyPair();
-				break;
-			case "c": 
-				secureData();
-				break;
-			default:
-				break;
-		}
+		c = "";
+
 		s.close();
 	}
 }
