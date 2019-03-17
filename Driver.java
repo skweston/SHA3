@@ -230,7 +230,7 @@ public class Driver {
 		while (1 << 8*n <= z) n++;
 		byte[] z_as_byte = new byte[n--];
 		do { 
-			z_as_byte[n - i] = (byte) ((z >>> 8*i) & 0xFFL);
+			z_as_byte[n - i] = (byte) ((z >>> 8*i) & 0x0FFL);
 			i++;
 		} while (i <= n);
 		
@@ -243,6 +243,7 @@ public class Driver {
 		new sha3();
 		
 		Scanner dataScan = new Scanner(System.in);
+		dataScan.useDelimiter("\n");
 		System.out.println("Insert Passphrase for Encryption:");
 		String pass = dataScan.next();
 		System.out.println("Type message for Encryption:");
@@ -509,7 +510,9 @@ public class Driver {
 		String[] s_split = s.split(" ");
 		byte[] result = new byte[s_split.length];
 		for (int i = 0; i < s_split.length; i++) {
-			result[i] = new Byte("0x" + s_split[i]);
+			int diget1 = s_split[i].charAt(0) & 0x0f;
+			int diget2 = s_split[i].charAt(1) & 0x0f;
+			result[i] = (byte) ((diget1 << 4) + diget2);
 		}
 		return result;
 	}

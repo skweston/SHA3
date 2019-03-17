@@ -95,7 +95,6 @@ public class TestDriver {
 			String input = "";
 			byte[] o123 = new byte[0x04];
 			byte[] K = new byte[32];
-			
 			for (int g = 0; g < o123.length; g++) {
 				o123[g] = (byte) g;
 			}
@@ -157,6 +156,14 @@ public class TestDriver {
 	private static void signFile(byte[] m) {
 		sha3 hash = new sha3();
 		ECDHIES ec = new ECDHIES();
+	
+		/* r = 2^519 − 337554763258501705789107630418782636071904961214051226618635150085779108655765 */
+		
+		BigInteger r = new BigInteger("2");
+		r = r.pow(519);
+		r = r.subtract(new BigInteger("337554763258501705789107630418782636071904961214051226618635150085779108655765"));
+		System.out.println(r);
+		
 		
 		//Generate s value
 		BigInteger s = new BigInteger(hash.KMACXOF256("abc123".getBytes(), "".getBytes(), 512/8, "K"));
@@ -181,6 +188,7 @@ public class TestDriver {
 			h = h.multiply(new BigInteger("-1"));
 		}
 		BigInteger z = (k.subtract(h.multiply(s))).mod(r);
+		BigInteger[] sigma = {h,z};
 		
 	}
 	
