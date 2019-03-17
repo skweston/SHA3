@@ -1,4 +1,10 @@
 //ecc2
+/*
+ *Author Shannon Weston
+ *Version 1.1
+ *Date 3/18/2019 
+ */
+
 import java.math.BigInteger;
 
 public class ECDHIES {

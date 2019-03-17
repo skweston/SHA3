@@ -1,3 +1,9 @@
+/*
+ *Authors Shannon Weston and James Haines-Temons
+ *Date of release 3/18/2019
+ *Version 1.1 
+ */
+
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
