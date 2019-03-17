@@ -24,7 +24,7 @@ public class ECDHIES {
 		byte[] s = generateS(passphrase);
 		generateV(s);
 	}
-	
+	//stuff
 	public static BigInteger[] generateG() {
 		BigInteger x = new BigInteger("18");
 		BigInteger vNum = BigInteger.ONE.subtract(x.pow(2)).mod(p);
