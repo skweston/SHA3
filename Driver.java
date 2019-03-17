@@ -456,12 +456,13 @@ public class Driver {
 	
 	/*
 	 * s <- KMACXOF256(pw, "", 512, "K"); s <- 4s;
-	 * k <- KMACXOF256(x, m, 512, "N"); k<- 4k;
+	 * k <- KMACXOF256(s, m, 512, "N"); k<- 4k;
 	 * U <- k*G;
 	 * h <- KMACXOF256(Ux, m, 512, "T"); z <- (k - hs) mod r
 	 * sigma <- (h, z)
 	 */
 	private static void signFile() {
+		
 		
 	}
 

@@ -25,7 +25,7 @@ public class ECDHIES {
 		generateV(s);
 	}
 	
-	public static void generateG() {
+	public static BigInteger[] generateG() {
 		BigInteger x = new BigInteger("18");
 		BigInteger vNum = BigInteger.ONE.subtract(x.pow(2)).mod(p);
 		BigInteger vDom = BigInteger.ONE.subtract(d.multiply(x.pow(2))).modInverse(p);
@@ -35,6 +35,8 @@ public class ECDHIES {
 		
 		G = new PointOnCurve(x, y);
 		System.out.println("x: " + G.myX + " y: " + G.myY);
+		BigInteger[] g = {x, y};
+		return g;
 	}
 	
 	private static byte[] generateS(String pass) {

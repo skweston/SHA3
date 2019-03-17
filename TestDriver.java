@@ -1,3 +1,5 @@
+import java.math.BigInteger;
+
 /*
  *  This is still kind of a mess as I have been scrambling.
  * 
@@ -85,7 +87,7 @@ public class TestDriver {
 			}
 			System.out.println();*/
 			
-			System.out.println("sha3");
+			//System.out.println("sha3");
 			new sha3();
 			//(String in, int inlen, byte[] md, int mdlen)
 			byte[] b = new byte[32];
@@ -103,7 +105,15 @@ public class TestDriver {
 			}
 			
 			byte[] fucker = sha3.KMACXOF256("".getBytes(), "abc".getBytes(), 64, "D");
+			for (byte _b : fucker) {
+				System.out.printf("%02x", _b);
+			}
+			System.out.println();
 			System.out.println(fucker.length);
+			
+			signFile("".getBytes());
+			
+			
 			
 			
 //				System.out.printf("%x ", b[z]);
@@ -135,6 +145,43 @@ public class TestDriver {
 		}
 		
 		return fails;
+	}
+	
+	/*
+	 * s <- KMACXOF256(pw, "", 512, "K"); s <- 4s;
+	 * k <- KMACXOF256(s, m, 512, "N"); k<- 4k;
+	 * U <- k*G;
+	 * h <- KMACXOF256(Ux, m, 512, "T"); z <- (k - hs) mod r
+	 * sigma <- (h, z)
+	 */
+	private static void signFile(byte[] m) {
+		sha3 hash = new sha3();
+		ECDHIES ec = new ECDHIES();
+		
+		//Generate s value
+		BigInteger s = new BigInteger(hash.KMACXOF256("abc123".getBytes(), "".getBytes(), 512/8, "K"));
+		
+		if (s.compareTo(BigInteger.ZERO) < 0) {
+			s = s.multiply(new BigInteger("-1"));
+		}
+		s = s.multiply(new BigInteger("4"));
+		
+		//generate k value
+		
+		BigInteger k = new BigInteger(sha3.KMACXOF256(s.toByteArray(), m, 512/8, "N"));
+		if (k.compareTo(BigInteger.ZERO) < 0) {
+			k = k.multiply(new BigInteger("-1"));
+		}
+		k = k.multiply(new BigInteger("4"));
+		
+		BigInteger[] G = ec.generateG();
+		BigInteger[] U = {G[0].multiply(k), G[1].multiply(k)}; 
+		BigInteger h = new BigInteger(hash.KMACXOF256(U[0].toByteArray(), m, 512/8, "T"));
+		if (h.compareTo(BigInteger.ZERO) < 0) {
+			h = h.multiply(new BigInteger("-1"));
+		}
+		BigInteger z = (k.subtract(h.multiply(s))).mod(r);
+		
 	}
 	
 	//Runner of test code
