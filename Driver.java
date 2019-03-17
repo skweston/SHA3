@@ -457,7 +457,7 @@ public class Driver {
 		if(choice.equals("a")) {
 			file = genKeyPair();
 		} else if(choice.equals("b")) {
-			System.out.println("Input File Name (with extension): ");
+			System.out.println("Input File Name (without extension): ");
 			file = s.next();
 			//read in only public key
 		}
@@ -470,7 +470,14 @@ public class Driver {
 		}
 		System.out.println(file);
 		System.out.println(publicK);
-		V.myY = new BigInteger(publicK.getBytes());
+		byte[] pK = get_bytes_from_string(publicK);
+		
+		for(int j = 0; j < pK.length; j++) {
+			System.out.printf("%x ", pK[j]);
+		}
+		System.out.println();
+		
+		V.myY = new BigInteger(1, pK);
 		System.out.println(V.myY);
 			
 		

@@ -74,6 +74,26 @@ public class ECDHIES {
 		String publicK = bytesToString(v);
 		System.out.println(publicK);
 		
+		//to print key with byte spacing
+		int j = 0;
+		char[] c = publicK.toCharArray();
+		char[] p = new char[(c.length * 2) - 1];
+		for(int i = 0; i < publicK.length(); i++) {
+			if(i == 0) {
+				p[j++] = c[i];
+			} else {
+				if(i % 2 == 0) {
+					p[j++] = ' ';
+					p[j++] = c[i];
+				} else {
+					p[j++] = c[i];
+				}
+			}
+		}
+		
+		publicK = new String(p);
+		System.out.println("publicK: " + publicK);
+		
 		File f = new File("./" + fileName + ".txt");
 		try {
 			FileOutputStream fo = new FileOutputStream(f);
