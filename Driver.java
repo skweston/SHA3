@@ -637,11 +637,83 @@ public class Driver {
 		
 	}
 
-	/*
-	 * U <- x*G + h*V
-	 * accept iff KMACXOF256(Ux, m, 512, "T") = h
+	/**
+	 * Public key file and message input file must be formated to space delimited byte values in hexadecimal strings.
+	 * 
+	 * i.e., 00 01 02 03 04 05 06...
+	 * 
+	 * Signature file must be two lines first line is a string to be passed into BigInteger constructor of the h value,
+	 * second line must be a string to be passed into BigInteger constructor for the value of z.
 	 */
 	private static void verifySignature() {
+		
+		sha3 hash = new sha3();
+		ECDHIES ec = new ECDHIES();
+		BigInteger[] G = ec.generateG();
+		Scanner input = new Scanner(System.in);
+		Scanner file_scanner = null;
+		
+		BigInteger r = new BigInteger("2");
+		r = r.pow(519);
+		r = r.subtract(new BigInteger("337554763258501705789107630418782636071904961214051226618635150085779108655765"));
+				
+		System.out.println("Public Key File Name:");
+		String file_in = input.next();
+		try {
+			file_scanner = new Scanner(new File(file_in));
+			file_scanner.useDelimiter("\n");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		byte[] v = get_bytes_from_string(file_scanner.next());
+		BigInteger V = new BigInteger(v);
+		
+		if (V.compareTo(BigInteger.ZERO) < 0) V = V.multiply(new BigInteger("-1"));
+		
+		System.out.println("Message File Name:");
+		file_in = input.next();
+		try {
+			file_scanner = new Scanner(new File(file_in));
+			file_scanner.useDelimiter("\n");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println("Signature File Name:");
+		file_in = input.next();
+		try {
+			file_scanner = new Scanner(new File(file_in));
+			file_scanner.useDelimiter("\n");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// U <- z*G + h*V
+		BigInteger h = new BigInteger(file_scanner.next());
+		BigInteger z = new BigInteger(file_scanner.next());
+		
+		if (h.compareTo(BigInteger.ZERO) < 0) h = h.multiply(new BigInteger("-1"));
+		if (z.compareTo(BigInteger.ZERO) < 0) z = z.multiply(new BigInteger("-1"));
+		
+		
+		byte[] m = get_bytes_from_string(file_scanner.next());
+		
+		BigInteger Ux = z.multiply(G[0]).add(h.multiply(V)).mod(r);
+		if (Ux.compareTo(BigInteger.ZERO) < 0) Ux = Ux.multiply(new BigInteger("-1"));
+		
+		//accept iff KMACXOF256(Ux, m, 512, "T") = h
+		BigInteger h_prime = new BigInteger(sha3.KMACXOF256(Ux.toByteArray(), m, 512/8, "T"));
+		
+		if (h_prime.compareTo(h) == 0) {
+			System.out.println("Signature Match Success.");
+		} else {
+			System.out.println("Signature Match Fail.");
+		}
+		
+		
 
 	}
 	
