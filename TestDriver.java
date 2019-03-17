@@ -1,4 +1,10 @@
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Scanner;
 
 /*
  *  This is still kind of a mess as I have been scrambling.
@@ -156,13 +162,24 @@ public class TestDriver {
 	private static void signFile(byte[] m) {
 		sha3 hash = new sha3();
 		ECDHIES ec = new ECDHIES();
-	
+		Scanner input = new Scanner(System.in);
+		input.useDelimiter("\n");
+		Scanner file_scanner = null;
+		
+		System.out.println("File Name:");
+		String file_in = input.next();
+		try {
+			file_scanner = new Scanner(new File(file_in));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		/* r = 2^519 − 337554763258501705789107630418782636071904961214051226618635150085779108655765 */
 		
 		BigInteger r = new BigInteger("2");
 		r = r.pow(519);
 		r = r.subtract(new BigInteger("337554763258501705789107630418782636071904961214051226618635150085779108655765"));
-		System.out.println(r);
 		
 		
 		//Generate s value
@@ -189,6 +206,31 @@ public class TestDriver {
 		}
 		BigInteger z = (k.subtract(h.multiply(s))).mod(r);
 		BigInteger[] sigma = {h,z};
+		
+		System.out.println("Enter file name to write: ");
+	    String file_out = input.next();
+	    
+	    BufferedWriter writer = null;
+		try {
+			writer = new BufferedWriter(new FileWriter(file_out));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    try {
+			writer.write(sigma[0] + "\n");
+			writer.write(sigma[1] + "\n");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	         
+	    try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 	

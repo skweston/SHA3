@@ -321,6 +321,8 @@ public class Driver {
 		boolean correct = true;
 		Scanner input = new Scanner(System.in);
 		Scanner file_scanner = null;
+		file_scanner.useDelimiter("\n");
+		
 		System.out.println("File Name:");
 		String file_in = input.next();
 		try {
@@ -330,7 +332,7 @@ public class Driver {
 			e.printStackTrace();
 		}
 		
-		file_scanner.useDelimiter("\n");
+		
 		byte[] z = get_bytes_from_string(file_scanner.next());
 		byte[] c = get_bytes_from_string(file_scanner.next());
 		byte[] t = get_bytes_from_string(file_scanner.next());
@@ -463,8 +465,82 @@ public class Driver {
 	 */
 	private static void signFile() {
 		
+		sha3 hash = new sha3();
+		ECDHIES ec = new ECDHIES();
+		Scanner input = new Scanner(System.in);
+		input.useDelimiter("\n");
+		Scanner file_scanner = null;
+		
+		System.out.println("File Name:");
+		String file_in = input.next();
+		try {
+			file_scanner = new Scanner(new File(file_in));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		byte[] m = get_bytes_from_string(file_scanner.next());
+		
+		/* r = 2^519 − 337554763258501705789107630418782636071904961214051226618635150085779108655765 */
+		
+		BigInteger r = new BigInteger("2");
+		r = r.pow(519);
+		r = r.subtract(new BigInteger("337554763258501705789107630418782636071904961214051226618635150085779108655765"));
+		
+		
+		//Generate s value
+		BigInteger s = new BigInteger(hash.KMACXOF256("abc123".getBytes(), "".getBytes(), 512/8, "K"));
+		
+		if (s.compareTo(BigInteger.ZERO) < 0) {
+			s = s.multiply(new BigInteger("-1"));
+		}
+		s = s.multiply(new BigInteger("4"));
+		
+		//generate k value
+		
+		BigInteger k = new BigInteger(sha3.KMACXOF256(s.toByteArray(), m, 512/8, "N"));
+		if (k.compareTo(BigInteger.ZERO) < 0) {
+			k = k.multiply(new BigInteger("-1"));
+		}
+		k = k.multiply(new BigInteger("4"));
+		
+		BigInteger[] G = ec.generateG();
+		BigInteger[] U = {G[0].multiply(k), G[1].multiply(k)}; 
+		BigInteger h = new BigInteger(hash.KMACXOF256(U[0].toByteArray(), m, 512/8, "T"));
+		if (h.compareTo(BigInteger.ZERO) < 0) {
+			h = h.multiply(new BigInteger("-1"));
+		}
+		BigInteger z = (k.subtract(h.multiply(s))).mod(r);
+		BigInteger[] sigma = {h,z};
+		
+		System.out.println("Enter file name to write: ");
+	    String file_out = input.next();
+	    
+	    BufferedWriter writer = null;
+		try {
+			writer = new BufferedWriter(new FileWriter(file_out));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    try {
+			writer.write(sigma[0] + "\n");
+			writer.write(sigma[1] + "\n");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	         
+	    try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
+	
 
 	/*
 	 * U <- x*G + h*V
