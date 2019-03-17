@@ -223,6 +223,8 @@ public class Driver {
 	 */ 
 	private static void symmetricEncrypt() {
 		
+		boolean direct = false;
+		
 		//Get integer random and convert to a byte array.
 		SecureRandom random = new SecureRandom();
 		int z = random.nextInt(512);
@@ -245,48 +247,27 @@ public class Driver {
 		Scanner dataScan = new Scanner(System.in);
 		dataScan.useDelimiter("\n");
 		System.out.println("Insert Passphrase for Encryption:");
-		String pass = dataScan.next();
+		String pw = dataScan.next();
 		System.out.println("Type message for Encryption:");
 		String message = dataScan.next();
-		byte[] key = concat(z_as_byte, pass.getBytes());
+		byte[] m = message.getBytes();
+		
+		byte[] key = concat(z_as_byte, pw.getBytes());
 		byte[] keka = sha3.KMACXOF256(key, "".getBytes(), 1024/8 /* for bytes not bits*/, "S");
-//		System.out.println("keka");
-//		for(int z = 0; z < keka.length; z++) {
-//			System.out.printf("%x", keka[z]);
-//		}
-//		System.out.println();
 		
-//		System.out.println("length: " + keka.length);
-		byte[] ke = new byte[keka.length/2];
-		byte[] ka = new byte[keka.length/2];
-		
-		for(i = 0; i < keka.length/2; i++) {
-			int j = 0;
-			if(i < keka.length/2) {
-				ke[j++] = keka[i];
-			} else {
-				ka[j++] = keka[i];
-			}
+		int ke_ka_size = keka.length / 2;
+		byte [] ke = new byte[ke_ka_size];
+		byte[] ka = new byte[ke_ka_size];
+		for (int j = 0; j < ke.length; j++) {
+			ke[j] = keka[j];
+			ka[j] = keka[j + ke_ka_size];
 		}
 		
-//		String input = "";
-//		char[] ins = input.toCharArray();
-//		System.out.println("ke");
-//		for(int z = 0; z < ke.length; z++) {
-//			System.out.printf("%x", ke[z]);
-//		}
-//		System.out.println();
-//		System.out.println(ke.length);
-//		System.out.println(ka.length);
-//		System.out.println("ka");
-//		for(int z = 0; z < ka.length; z++) {
-//			System.out.printf("%x", ka[z]);
-//		}
-//		System.out.println();
-		byte[] c = sha3.KMACXOF256(ke, "".getBytes(), message.length(), "SKE");
+		/* c <- KMACXOF256(ke, "", |m|, "SKE") xor m */
+		byte[] c = sha3.KMACXOF256(ke, "".getBytes(), m.length, "SKE");
 		
 		for(i = 0; i < c.length; i++) {
-			c[i] ^= message.getBytes()[i];
+			c[i] ^= m[i];
 		}
 		
 		byte[] t = sha3.KMACXOF256(ka, message.getBytes(), 512/8, "SKA");
@@ -354,11 +335,27 @@ public class Driver {
 		byte[] c = get_bytes_from_string(file_scanner.next());
 		byte[] t = get_bytes_from_string(file_scanner.next());
 		
+//		//Test input is same as text file
+//		for (byte b : z) {
+//			System.out.printf("%02x ", b);
+//		}
+//		System.out.println();
+//		for (byte b : c) {
+//			System.out.printf("%02x ", b);
+//		}
+//		System.out.println();
+//		for (byte b : t) {
+//			System.out.printf("%02x ", b);
+//		}
+//		System.out.println();
+		
 		System.out.println("Enter the password:");
 		String pw = input.next();
 		
 		byte[] z_pw = concat(z, pw.getBytes());
 		byte[] keka = sha3.KMACXOF256(z_pw, "".getBytes(), 1024/8, "S");
+		
+		
 		int ke_ka_size = keka.length / 2;
 		byte [] ke = new byte[ke_ka_size];
 		byte[] ka = new byte[ke_ka_size];
@@ -367,10 +364,13 @@ public class Driver {
 			ka[i] = keka[i + ke_ka_size];
 		}
 		
+		/* m <- KMACXOF256(ke, "", |c|, "SKE") xor c */
 		byte[] m = sha3.KMACXOF256(ke, "".getBytes(), c.length, "SKE");
 		for (int j = 0; j < m.length; j++) {
 			m[j] ^= c[j];
 		}
+		
+		
 		byte[] t_prime = sha3.KMACXOF256(ka, m, 512/8, "SKA");
 		for (int k = 0; k < t_prime.length; k++) {
 			correct = (t[k] == t_prime[k]);
@@ -378,10 +378,7 @@ public class Driver {
 		
 		if (correct) {
 			System.out.println("Password Accepted - Message output:");
-			for (byte b : m) {
-				System.out.printf("%x ", b);
-			}
-			System.out.println();
+			System.out.println(new String(m));
 		} else {
 			System.out.println("Password Failed.");
 		}
@@ -505,14 +502,20 @@ public class Driver {
 		return sb.substring(0, sb.substring(0).length() - 1);
 		
 	}
-	
+	/*     int len = s.length();
+    byte[] data = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+        data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                             + Character.digit(s.charAt(i+1), 16));
+    }
+    return data;
+	}*/
 	private static byte[] get_bytes_from_string(String s) {
 		String[] s_split = s.split(" ");
 		byte[] result = new byte[s_split.length];
 		for (int i = 0; i < s_split.length; i++) {
-			int diget1 = s_split[i].charAt(0) & 0x0f;
-			int diget2 = s_split[i].charAt(1) & 0x0f;
-			result[i] = (byte) ((diget1 << 4) + diget2);
+			result[i] = (byte) ((Character.digit(s_split[i].charAt(0), 16) << 4) + Character.digit(s_split[i].charAt(1), 16));
+			
 		}
 		return result;
 	}
