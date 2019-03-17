@@ -69,7 +69,6 @@ public class ECDHIES {
 		generateG();
 		byte[] s = generateS(b);
 		byte[] v = generateV(s);
-		System.out.println(v.length);
 
 		String publicK = bytesToString(v);
 		System.out.println(publicK);
@@ -139,8 +138,8 @@ public class ECDHIES {
 			}
 		}
 
-		publicKey = V.myX; //correct?
-		byte[] b = V.myX.toByteArray();
+		publicKey = V.myX.mod(p); //correct?
+		byte[] b = V.myX.mod(p).toByteArray();
 		return b;
 	}
 	
