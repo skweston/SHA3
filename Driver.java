@@ -776,7 +776,7 @@ public class Driver {
 			
 		System.out.println("\tc) Secure Data");
 			
-		System.out.println("\td) Exit");
+		System.out.println("\tAll other) Exit");
 		c = s.next();
 		if(c.equals("a")) {
 			test();
