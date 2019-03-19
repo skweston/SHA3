@@ -9,9 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.Scanner;
+
 import static java.nio.file.StandardOpenOption.*;
 import java.nio.file.*;
 import java.io.*;
+
 
 public class Driver {
 	//Driver
@@ -586,27 +588,21 @@ public class Driver {
 		
 		
 		//Generate s value
-		BigInteger s = new BigInteger(hash.KMACXOF256("abc123".getBytes(), "".getBytes(), 512/8, "K"));
-		
-		if (s.compareTo(BigInteger.ZERO) < 0) {
-			s = s.multiply(new BigInteger("-1"));
-		}
+		BigInteger s = new BigInteger(1, hash.KMACXOF256("abc123".getBytes(), "".getBytes(), 512/8, "K"));
+				
 		s = s.multiply(new BigInteger("4"));
 		
 		//generate k value
 		
-		BigInteger k = new BigInteger(sha3.KMACXOF256(s.toByteArray(), m, 512/8, "N"));
-		if (k.compareTo(BigInteger.ZERO) < 0) {
-			k = k.multiply(new BigInteger("-1"));
-		}
+		BigInteger k = new BigInteger(1, hash.KMACXOF256(s.toByteArray(), m, 512/8, "N"));
+		
 		k = k.multiply(new BigInteger("4"));
 		
 		BigInteger[] G = ec.generateG();
 		BigInteger[] U = {G[0].multiply(k), G[1].multiply(k)}; 
-		BigInteger h = new BigInteger(hash.KMACXOF256(U[0].toByteArray(), m, 512/8, "T"));
-		if (h.compareTo(BigInteger.ZERO) < 0) {
-			h = h.multiply(new BigInteger("-1"));
-		}
+		BigInteger h = new BigInteger(1, hash.KMACXOF256(U[0].toByteArray(), m, 512/8, "T")).mod(r);
+		
+		
 		BigInteger z = (k.subtract(h.multiply(s))).mod(r);
 		BigInteger[] sigma = {h,z};
 		
@@ -638,7 +634,7 @@ public class Driver {
 	}
 
 	/**
-	 * Public key file and message input file must be formated to space delimited byte values in hexadecimal strings.
+	 * Public key file (must have two lines) and message input file must be formated to space delimited byte values in hexadecimal strings.
 	 * 
 	 * i.e., 00 01 02 03 04 05 06...
 	 * 
@@ -649,7 +645,7 @@ public class Driver {
 		
 		sha3 hash = new sha3();
 		ECDHIES ec = new ECDHIES();
-		BigInteger[] G = ec.generateG();
+		BigInteger[] g = ec.generateG();
 		Scanner input = new Scanner(System.in);
 		Scanner file_scanner = null;
 		
@@ -666,10 +662,14 @@ public class Driver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		byte[] v = get_bytes_from_string(file_scanner.next());
-		BigInteger V = new BigInteger(v);
+		byte[] v1 = get_bytes_from_string(file_scanner.next());
+		byte[] v2 = get_bytes_from_string(file_scanner.next());
+		BigInteger V1 = new BigInteger(1, v1);
+		BigInteger V2 = new BigInteger(1, v2);
 		
-		if (V.compareTo(BigInteger.ZERO) < 0) V = V.multiply(new BigInteger("-1"));
+		ECDHIES.PointOnCurve V = new ECDHIES.PointOnCurve(V1, V2);
+		ECDHIES.PointOnCurve G = new ECDHIES.PointOnCurve(g[0], g[1]);
+		
 		
 		System.out.println("Message File Name:");
 		file_in = input.next();
@@ -680,6 +680,8 @@ public class Driver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		byte[] m = get_bytes_from_string(file_scanner.next());
 		
 		System.out.println("Signature File Name:");
 		file_in = input.next();
@@ -695,17 +697,19 @@ public class Driver {
 		BigInteger h = new BigInteger(file_scanner.next());
 		BigInteger z = new BigInteger(file_scanner.next());
 		
-		if (h.compareTo(BigInteger.ZERO) < 0) h = h.multiply(new BigInteger("-1"));
-		if (z.compareTo(BigInteger.ZERO) < 0) z = z.multiply(new BigInteger("-1"));
+		G.myX = G.myX.multiply(z).mod(r);
+		G.myY = G.myY.multiply(z).mod(r);
 		
+		V.myX = V.myX.multiply(h).mod(r);
+		V.myY = V.myY.multiply(h).mod(r);
 		
-		byte[] m = get_bytes_from_string(file_scanner.next());
+		ECDHIES.PointOnCurve U = ec.addPoints(G, V);
 		
-		BigInteger Ux = z.multiply(G[0]).add(h.multiply(V)).mod(r);
-		if (Ux.compareTo(BigInteger.ZERO) < 0) Ux = Ux.multiply(new BigInteger("-1"));
+		U.myX = U.myX.mod(r);
+		U.myY = U.myY.mod(r);
 		
 		//accept iff KMACXOF256(Ux, m, 512, "T") = h
-		BigInteger h_prime = new BigInteger(sha3.KMACXOF256(Ux.toByteArray(), m, 512/8, "T"));
+		BigInteger h_prime = new BigInteger(1, sha3.KMACXOF256(U.myX.toByteArray(), m, 512/8, "T"));
 		
 		if (h_prime.compareTo(h) == 0) {
 			System.out.println("Signature Match Success.");
