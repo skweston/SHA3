@@ -3,6 +3,7 @@
  *Version 1.1
  *Date 3/18/2019 
  */
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -11,6 +12,8 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.math.BigInteger;
 import java.nio.file.Files;
 
@@ -20,7 +23,8 @@ public class ECDHIES {
 	private static BigInteger p = new BigInteger("2").pow(521).subtract(new BigInteger("1"));
 	private static BigInteger d = new BigInteger("-376014");
 	
-	private static PointOnCurve G = new PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
+	public static PointOnCurve G = new PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
+	public static PointOnCurve V = new PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
 	
 	public ECDHIES() {
 		
@@ -76,45 +80,49 @@ public class ECDHIES {
 		//to print key with byte spacing
 		int j = 0;
 		char[] c = publicK.toCharArray();
-		char[] p = new char[(c.length * 2) - 1];
+		char[] n = new char[(c.length * 2) - 1];
 		for(int i = 0; i < publicK.length(); i++) {
 			if(i == 0) {
-				p[j++] = c[i];
+				n[j++] = c[i];
 			} else {
 				if(i % 2 == 0) {
-					p[j++] = ' ';
-					p[j++] = c[i];
+					n[j++] = ' ';
+					n[j++] = c[i];
 				} else {
-					p[j++] = c[i];
+					n[j++] = c[i];
 				}
 			}
 		}
+		String publicX = new String(n);
 		
-		publicK = new String(p);
-		System.out.println("publicK: " + publicK);
+		BigInteger Y = V.myY.mod(p);
+		byte[] y = Y.toByteArray();
+		String theY = bytesToString(y);
+		c = theY.toCharArray();
+		n = new char[(c.length * 2) - 1];
+		j = 0;
+		for(int i = 0; i < publicK.length(); i++) {
+			if(i == 0) {
+				n[j++] = c[i];
+			} else {
+				if(i % 2 == 0) {
+					n[j++] = ' ';
+					n[j++] = c[i];
+				} else {
+					n[j++] = c[i];
+				}
+			}
+		}
+		String publicY = new String(n);
 		
-		File f = new File("./" + fileName + ".txt");
-		try {
-			FileOutputStream fo = new FileOutputStream(f);
-			try {
-				fo.write(publicK.getBytes());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-			//encrypt private key and print to file as well
-			//requires part 4 and the same password that generated the keys
-			String n = bytesToString(s);
-			//System.out.println("private: " + n);
-			//pass s to encrypt data to encrypt password
-			
-			try {
-				fo.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} catch (FileNotFoundException e) {
-			System.out.println("file not found");
+		String outputFile = fileName + ".txt";
+		Path path = Paths.get(outputFile);
+		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+		    writer.write(publicX + "\n");
+		    writer.write(publicY + "\n");
+		    writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 		System.out.println("Keys saved to " + fileName + ".txt");
@@ -145,8 +153,9 @@ public class ECDHIES {
 		return s;
 	}
 	
+	//V = s*G
 	private static byte[] generateV(byte[] s) {
-		PointOnCurve V = G;
+		V = G;
 		
 		for(int i = 0; i < s.length; i++) {
 			for(int j = 0; j < 8; j++) {
@@ -176,6 +185,13 @@ public class ECDHIES {
 		return new PointOnCurve(newX, newY);
 	}
 	
+	/**
+	 * @author Paulo Barreto
+	 * @param x
+	 * @param p
+	 * @param lsb
+	 * @return
+ 	*/
 	public static BigInteger sqrt(BigInteger x, BigInteger p, boolean lsb) {
 		assert(p.testBit(0) && p.testBit(1));
 		

@@ -55,6 +55,46 @@ public class Driver {
 		return s;
 	}
 	
+	private static String bytesToStringWSpaces(byte[] b) {
+		String s = new String();
+
+		int j = 0;
+		char[] cr = new char[b.length * 2 + (b.length * 2 - 1)];
+		for(int z = 0; z < b.length; z++) {
+			byte y = b[z];
+			int i = (y >>> 4) & 0x0F;
+			int k = y & 0x0F;
+
+			char c = 'a';
+			char d = 'a';
+			
+			
+			if(i >= 0 && i <= 9) {
+				c = (char) (((int) i) + '0');
+			}
+			
+			if(i >= 10 && i <= 15) {
+				c = (char) ('a' + (char) (((int) i) % 10));
+			}
+			
+			if(k >= 0 && k <= 9) {
+				d = (char) (((int) k) + '0');
+			}
+			
+			if(k >= 10 && k <= 15) {
+				d = (char) ('a' + (char) (((int) k) % 10));
+			}
+			
+			cr[j++] = c;
+			cr[j++] = d;
+			cr[j++] = ' ';
+		}
+		
+		s = new String(cr);
+
+		return s;
+	}
+	
 	//Test
 	private static void test() {
 		System.out.println("Which algorithm would you like to test?");
@@ -164,6 +204,7 @@ public class Driver {
 			System.out.println("\tb) Symmetrically Secure File");
 			System.out.println("\tc) Elliptically Secure File");
 			System.out.println("\td) Sign a File");
+			System.out.println("\te) Verify");
 			choice = dataScan.next();
 			if(choice.equals("a")) {
 				hashFileInput();
@@ -189,6 +230,8 @@ public class Driver {
 				}
 			} else if(choice.equals("d")) {
 				signFile();
+			}  else if(choice.equals("e")) {
+				verifySignature();
 			}
 		}
 		
@@ -423,12 +466,14 @@ public class Driver {
 	 * cryptogram: (Z, c, t)
 	 */
 	private static void ellipticEncryptFile() {
-		System.out.println("Input name of file to encrypt: ");
+		System.out.println("Input name of file to encrypt (with extension): ");
 		Scanner s = new Scanner(System.in);
 		String file = s.next();
+		String inputFile = file;
 		String input = "";
 		try {
 			input = new String(Files.readAllBytes(Paths.get(file)));
+			System.out.println("input: " + input);
 		} catch (IOException e) {
 			System.out.println("File not found: ellipticEncryptFile()");
 			e.printStackTrace();
@@ -443,47 +488,54 @@ public class Driver {
 			k_as_byte[n - i] = (byte) ((k >>> 8 * i) & 0xFFL);
 			i++;
 		} while (i <= n);
+		
 		new sha3();
 		byte[] keka = new byte[1024/8];//?
-		ECDHIES.PointOnCurve W = new ECDHIES.PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
-		ECDHIES.PointOnCurve V = new ECDHIES.PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
+		ECDHIES.PointOnCurve W = new ECDHIES.PointOnCurve(new BigInteger(1, new byte[0]), new BigInteger(1, new byte[0]));
+		ECDHIES.PointOnCurve V = new ECDHIES.PointOnCurve(new BigInteger(1, new byte[0]), new BigInteger(1, new byte[0]));
 		//read in V from keyFile
 		
-		System.out.println("Do you have a key file prepare: ");
+		System.out.println("Do you have a key file prepared: ");
 		System.out.println("\ta) No");
 		System.out.println("\tb) Yes");
 		String choice = s.next();
-		String publicK = "";
+		String publicX = "";
+		String publicY = "";
+		
 		if(choice.equals("a")) {
 			file = genKeyPair();
 		} else if(choice.equals("b")) {
 			System.out.println("Input File Name (without extension): ");
 			file = s.next();
-			//read in only public key
 		}
 		
-		try {
-			publicK = new String(Files.readAllBytes(Paths.get(file + ".txt")));
+		Path path = Paths.get(file + ".txt");
+		try (BufferedReader reader = Files.newBufferedReader(path)) {
+			publicX = reader.readLine();
+			System.out.println(publicX);
+			
+			publicY = reader.readLine();
+			System.out.println(publicY);
 		} catch (IOException e) {
-			System.out.println("File not found: ellipticEncryptFile()");
 			e.printStackTrace();
 		}
-		System.out.println(file);
-		System.out.println(publicK);
-		byte[] pK = get_bytes_from_string(publicK);
-		
-		for(int j = 0; j < pK.length; j++) {
-			System.out.printf("%x ", pK[j]);
-		}
-		System.out.println();
-		
-		V.myY = new BigInteger(1, pK);
-		System.out.println(V.myY);
-			
-		
-		
 
+		byte[] pX = get_bytes_from_string(publicX);
+		byte[] pY = get_bytes_from_string(publicY);
+		
+		V.myX = new BigInteger(1, pX);
+		V.myY = new BigInteger(1, pY);
+		System.out.println(V.myX);
+		
+		ECDHIES.generateG();
+		ECDHIES.PointOnCurve G = ECDHIES.G;
+	
 		W = V;
+		
+		//k = k*4
+		BigInteger fourK = new BigInteger(1, k_as_byte);
+		fourK = fourK.shiftLeft(2);
+		k_as_byte = fourK.toByteArray();
 		
 		for(int l = 0; l < k_as_byte.length; l++) {
 			for(int j = 0; j < 8; j++) {
@@ -496,22 +548,70 @@ public class Driver {
 		}
 		
 		keka = sha3.KMACXOF256(W.myX.toByteArray(), "".getBytes(), 1024/8, "P");
-		/*System.out.println(input);
-		for(int z = 0; z < keka.length; z++) {
-			System.out.printf("%x ", keka[z]);
+		//byte[] m = get_bytes_from_string(input);
+		
+		//input = "";
+		byte[] m = input.getBytes();
+		System.out.println("m: ");
+		for(int l = 0; l < m.length; l++) {
+			System.out.printf("%x ", m[l]);
 		}
-		System.out.println();*/
 		
 		byte[] ke = new byte[keka.length/2];
 		byte[] ka = new byte[keka.length/2];
 		
-		byte[] c = sha3.KMACXOF256(ke, "".getBytes(), input.getBytes().length/8, "PKE");
+		int p = 0;
+		int q = 0;
+		for(int l = 0; l < keka.length; l++) {
+			if(l < ke.length) {
+				ke[p] = keka[l];
+				p++;
+			} else {
+				ka[q] = keka[l];
+				q++;
+			}
+		}
+
+		System.out.println("m.length: " + m.length);
+		byte[] c = sha3.KMACXOF256(ke, "".getBytes(), m.length, "PKE");
+		
 		//xor c with with message
-		byte[] t = sha3.KMACXOF256(ka, input.getBytes(), 512/8, "PKA");
+		for(int l = 0; l < c.length; l++) {
+			c[l] = (byte) (c[l] ^ m[l]);
+		}
+		System.out.println("c.length: " + c.length);
+		
+		byte[] t = sha3.KMACXOF256(ka, m, 512/8, "PKA");
+		System.out.println("T.length: " + t.length);
 		
 		//calculate Z
+		ECDHIES.PointOnCurve Z = new ECDHIES.PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
 		
+		Z = G;
+		for(int l = 0; l < k_as_byte.length; l++) {
+			for(int j = 0; j < 8; j++) {
+				
+				Z = ECDHIES.addPoints(Z, Z);
+				int b = (int) (k_as_byte[l] >> j) & 0x01; //does this sign extend correctly?
+				if(b == 1) {
+					Z = ECDHIES.addPoints(Z, G);				
+				}
+			}
+		}
 		
+		//Z is now k*Z
+		String outputFile = inputFile + ".cryptogram";
+		path = Paths.get(outputFile);
+		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+		    writer.write(bytesToStringWSpaces(Z.myX.toByteArray()) + "\n");
+		    writer.write(bytesToStringWSpaces(Z.myY.toByteArray()) + "\n");
+		    
+		    writer.write(bytesToStringWSpaces(c) + "\n");
+		    writer.write(bytesToStringWSpaces(t) + "\n");
+		    writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		//output Z, c, t
 		s.close();
 	}
@@ -525,7 +625,113 @@ public class Driver {
 	 * if and only if t' = t
 	 */
 	private static void ellipticDecryptFile() {
+		new sha3();
+		//read in Z, c, t
 		
+		System.out.println("Insert name of file (with extension (ex: .txt)): ");
+		Scanner s = new Scanner(System.in);
+		String inputFile = s.next();
+		inputFile = inputFile.concat(".cryptogram");
+		Path path = Paths.get(inputFile);
+		String inX = "";
+		String inY = "";
+		
+		String in2 = "";
+		String in3 = "";
+		
+		try (BufferedReader reader = Files.newBufferedReader(path)) {
+			inX = reader.readLine();
+			System.out.println(inX);
+			
+			inY = reader.readLine();
+			System.out.println(inY);
+			
+			in2 = reader.readLine();
+			System.out.println(in2);
+			in3 = reader.readLine();
+			System.out.println(in3);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		//byte[] Z = get_bytes_from_string(in1);
+		ECDHIES.PointOnCurve Z = new ECDHIES.PointOnCurve(new BigInteger(1, get_bytes_from_string(inX)), new BigInteger(1, get_bytes_from_string(inY)));
+		/*for(int i = 0; i < Z.length; i++) {
+			System.out.printf("%x ", Z[i]);
+		}
+		System.out.println();*/
+		
+		byte[] c = get_bytes_from_string(in2);
+		byte[] t = get_bytes_from_string(in3);
+		
+		System.out.println("Insert password for file: ");
+		String pw = s.next();
+		byte[] p = get_bytes_from_string(pw);
+		byte[] k = sha3.KMACXOF256(p, "".getBytes(), 512/8, "K");
+		
+		System.out.println("k: ");
+		for(int i = 0; i < k.length; i++) {
+			System.out.printf("%x ", k[i]);
+		}
+		System.out.println();
+		
+		//s*4 -> k
+		BigInteger fourK = new BigInteger(1, k);
+		fourK = fourK.shiftLeft(2);
+		k = fourK.toByteArray();
+		
+		ECDHIES.PointOnCurve W = new ECDHIES.PointOnCurve(BigInteger.ZERO, BigInteger.ZERO);
+		W = Z;
+		for(int l = 0; l < k.length; l++) {
+			for(int j = 0; j < 8; j++) {
+				
+				W= ECDHIES.addPoints(W, W);
+				int b = (int) (k[l] >> j) & 0x01; //does this sign extend correctly?
+				if(b == 1) {
+					W = ECDHIES.addPoints(W, Z);				
+				}
+			}
+		}
+		
+		byte[] keka = sha3.KMACXOF256(W.myX.toByteArray(), "".getBytes(), 1024/8, "P");
+		
+		byte[] ke = new byte[keka.length/2];
+		byte[] ka = new byte[keka.length/2];
+		
+		int n = 0;
+		int q = 0;
+		for(int l = 0; l < keka.length; l++) {
+			if(l < ke.length) {
+				ke[n] = keka[l];
+				n++;
+			} else {
+				ka[q] = keka[l];
+				q++;
+			}
+		}
+		
+		byte[] m = sha3.KMACXOF256(ke, "".getBytes(), c.length/8, "PKE");
+		
+		//xor c with with message
+		for(int l = 0; l < m.length; l++) {
+			m[l] = (byte) (m[l] ^ c[l]);
+		}
+		
+		byte[] t_prime = sha3.KMACXOF256(ka, m, 512/8, "PKA");
+		
+		System.out.println("t_prime.length: " + t_prime.length);
+		System.out.println("t_prime: ");
+		for(int i = 0; i < t_prime.length; i++) {
+			System.out.printf("%x ", t_prime[i]);
+		}
+		System.out.println();
+		
+		for(int i = 0; i < t.length; i++) {
+			if(!(t[i] == t_prime[i])) {
+				System.out.println("Password not valid.");
+				break;
+			}
+		}
 	}
 	
 	/*
@@ -634,7 +840,6 @@ public class Driver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 	}
 
 	/**
@@ -712,9 +917,6 @@ public class Driver {
 		} else {
 			System.out.println("Signature Match Fail.");
 		}
-		
-		
-
 	}
 	
 	/**
